@@ -20,6 +20,93 @@
 - 現行運用では `npx playwright test` は使いません。
 - 旧 Playwright Test 型のファイルは削除済みです。
 
+## 必要環境
+
+このリポジトリを動かすには、以下が必要です。
+
+- Node.js
+- npm
+- Playwright Chromium
+- CountIT account
+- `Automation/.env`
+- 各自動化ツール用の `input/*.csv`
+
+初期開発と動作確認は macOS で行っています。Windowsでは未検証ですが、Node.js と Playwright ベースのため動作する可能性はあります。Windowsで使う場合は、`npm install`、Playwright browser、`.env` の場所、CSVの文字コード・改行コード、PowerShell/Git Bash のコマンド差に注意してください。
+
+## セットアップ手順
+
+1. リポジトリを取得します。
+
+```bash
+git clone <repository-url>
+cd Automation
+```
+
+2. `.env` を作成します。
+
+```bash
+cp .env.example .env
+```
+
+3. `Automation/.env` に CountIT のログイン情報と会社名を設定します。
+
+```text
+COUNTIT_EMAIL=
+COUNTIT_PASSWORD=
+COUNTIT_COMPANY_NAME=
+```
+
+discount と stock で別の CountIT会社を使う場合だけ、必要に応じて以下も設定します。
+
+```text
+COUNTIT_COMPANY_NAME_DISCOUNT=
+COUNTIT_COMPANY_NAME_STOCK=
+```
+
+4. 依存関係をインストールします。
+
+```bash
+cd pos-discount-automation
+npm install
+npx playwright install chromium
+
+cd ../pos-stock-automation
+npm install
+npx playwright install chromium
+```
+
+5. サンプルCSVを参考に、ローカルの入力CSVを作成します。
+
+```bash
+cd ..
+cp pos-discount-automation/examples/discounts.csv pos-discount-automation/input/discount_input.csv
+cp pos-stock-automation/examples/stock_input.example.csv pos-stock-automation/input/stock_input.csv
+```
+
+`input/*.csv` はGitHubに含めません。各利用者が、自分のCountIT環境と業務ルールに合わせてローカルで作成してください。
+
+6. ローカルテストを実行します。
+
+```bash
+cd pos-discount-automation
+npm test
+
+cd ../pos-stock-automation
+npm test
+```
+
+7. CountIT操作は必ず `dry-run` から始めます。
+
+`dry-run` で画面遷移、商品コード、商品名、判定ログを確認した後で、必要に応じて `semi-auto` を使います。`full-auto` は、`dry-run` と `semi-auto` で十分に確認した後だけ使ってください。
+
+別会社・別店舗・別のCountIT設定で使う場合は、実行前に以下を確認してください。
+
+- CountIT画面構造
+- CountIT会社名
+- 商品コード
+- 商品名
+- 割引・在庫入力の業務ルール
+
 ## ディレクトリ構成
 
 ```text
