@@ -5,10 +5,13 @@ const { selectors } = require('./selectors');
 
 async function openInventoryCountForm(page) {
   await page.goto(selectors.stock.overviewUrl);
-  await page.waitForLoadState('networkidle');
 
-  await page.getByRole('link', { name: selectors.stock.addInventoryLinkName }).click();
-  await page.waitForLoadState('networkidle');
+  const addInventoryLink = page.getByRole('link', { name: selectors.stock.addInventoryLinkName });
+  await expect(addInventoryLink).toBeVisible({ timeout: 10000 });
+  await addInventoryLink.click();
+
+  const descriptionInput = page.locator(selectors.stock.descriptionInput).first();
+  await expect(descriptionInput).toBeVisible({ timeout: 10000 });
 }
 
 async function fillInventoryCount(page, { inventoryDescription, records }) {
