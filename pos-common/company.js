@@ -18,19 +18,25 @@ function normalizeCompanyName(value) {
 }
 
 async function getCurrentCompanyName(page) {
+  const text = await readCurrentCompanyName(page, 3000);
+  if (text) {
+    console.log('company: current name detected');
+    return text;
+  }
+  console.log('company: current name not detected');
+  return null;
+}
+
+async function readCurrentCompanyName(page, timeout = 3000) {
   try {
-    const companyName = await firstVisibleCompanyNameDisplay(page, 3000);
+    const companyName = await firstVisibleCompanyNameDisplay(page, timeout);
     const rawText = await companyName.innerText();
     const text = normalizeCompanyName(rawText);
     debugCompany(`company: debug current raw=${JSON.stringify(rawText)} normalized=${JSON.stringify(text)}`);
-    if (text) {
-      console.log('company: current name detected');
-      return text;
-    }
+    if (text) return text;
   } catch (_) {
-    // Continue to not detected log below.
+    // Return null below.
   }
-  console.log('company: current name not detected');
   return null;
 }
 
@@ -70,13 +76,24 @@ async function switchCompanyIfNeeded(page, targetCompanyName) {
   }
 
   await companyLink.click();
-  await page.waitForLoadState('networkidle').catch(() => {});
-  await page.waitForTimeout(1000);
+  await waitForCurrentCompanyName(page, targetCompanyName);
+  console.log('company: switched and confirmed');
+}
 
-  const selectedCompanyName = await getCurrentCompanyName(page);
-  if (normalizeCompanyName(selectedCompanyName) !== normalizedTargetCompanyName) {
-    throw new Error('Current company could not be confirmed after switching.');
+async function waitForCurrentCompanyName(page, targetCompanyName, timeout = 10000) {
+  const normalizedTargetCompanyName = normalizeCompanyName(targetCompanyName);
+  const deadline = Date.now() + timeout;
+
+  while (Date.now() < deadline) {
+    const currentCompanyName = await readCurrentCompanyName(page, 500);
+    if (normalizeCompanyName(currentCompanyName) === normalizedTargetCompanyName) {
+      debugCompany('company: debug switched company matches target');
+      return;
+    }
+    await page.waitForTimeout(250);
   }
+
+  throw new Error('Current company could not be confirmed after switching.');
 }
 
 async function firstVisibleCompanyNameDisplay(page, timeout = 3000) {
