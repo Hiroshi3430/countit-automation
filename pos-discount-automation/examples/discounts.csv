@@ -1,0 +1,3 @@
+Product Code,Expected Product Name,Discount Price,Start Mode,Start Date,End Date,Operation,Memo
+22200,Yakisoba Sauce Funmatsu (Stir-Fried Noodle Powder Sauce),,NOW,,,END_ONLY,end active discount only
+79200,Matcha Mochi Ice Cream 6p (Rice Cake Filled with Green Tea Ice Cream),8.2,NOW,,,CREATE_OR_REPLACE,normal replace

@@ -1,0 +1,25 @@
+{
+  "name": "pos-stock-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "stock:dry-run": "node src/main.js --mode dry-run --input input/stock_input.csv",
+    "stock:semi-auto": "node src/main.js --mode semi-auto --input input/stock_input.csv",
+    "stock:full-auto": "node src/main.js --mode full-auto --input input/stock_input.csv",
+    "test": "node test/input.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1"
+  },
+  "dependencies": {
+    "csv-parse": "^6.2.1",
+    "dotenv": "^17.4.2",
+    "playwright": "^1.60.0"
+  }
+}
