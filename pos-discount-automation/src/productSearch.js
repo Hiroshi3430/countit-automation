@@ -34,6 +34,15 @@ async function extractFirstNonEmptyText(scope, selectorCandidates) {
   return '';
 }
 
+async function tryExtractFirstNonEmptyText(scope, selectorCandidates, context) {
+  try {
+    return await extractFirstNonEmptyText(scope, selectorCandidates);
+  } catch (error) {
+    console.log(`productRowCandidate:skip ${context} reason="${error.message}"`);
+    return null;
+  }
+}
+
 async function openProducts(page) {
   console.log('openProducts:goto');
   await page.goto(selectors.products.overviewUrl);
@@ -75,14 +84,31 @@ async function findProductRowByArticleNumber(page, searchValue) {
 
 async function findExactArticleNumberMatch(rows, searchValue) {
   const count = await rows.count();
+  const matches = [];
+
   for (let i = 0; i < count; i += 1) {
     const row = rows.nth(i);
-    const articleNumber = await extractFirstNonEmptyText(row, selectors.products.codeCellCandidates);
+    const articleNumber = await tryExtractFirstNonEmptyText(
+      row,
+      selectors.products.codeCellCandidates,
+      `index=${i} field=artNumber`
+    );
+    if (articleNumber === null) continue;
     if (articleNumber !== searchValue) continue;
-    const name = await extractFirstNonEmptyText(row, selectors.products.nameCellCandidates);
-    return { row, index: i, count, articleNumber, name };
+
+    const name = await tryExtractFirstNonEmptyText(
+      row,
+      selectors.products.nameCellCandidates,
+      `index=${i} field=name`
+    );
+    if (name === null) continue;
+    matches.push({ row, index: i, count, articleNumber, name });
   }
-  return null;
+
+  if (matches.length > 1) {
+    throw new Error(`Multiple products found by Article number: ${searchValue}`);
+  }
+  return matches[0] || null;
 }
 
 async function logProductRowCandidates(rows) {
@@ -90,8 +116,16 @@ async function logProductRowCandidates(rows) {
   console.log(`productRows:count=${count}`);
   for (let i = 0; i < count; i += 1) {
     const row = rows.nth(i);
-    const articleNumber = await extractFirstNonEmptyText(row, selectors.products.codeCellCandidates);
-    const name = await extractFirstNonEmptyText(row, selectors.products.nameCellCandidates);
+    const articleNumber = await tryExtractFirstNonEmptyText(
+      row,
+      selectors.products.codeCellCandidates,
+      `index=${i} field=artNumber`
+    );
+    const name = await tryExtractFirstNonEmptyText(
+      row,
+      selectors.products.nameCellCandidates,
+      `index=${i} field=name`
+    );
     console.log(`productRowCandidate:index=${i} artNumber="${articleNumber}" name="${name}"`);
   }
 }
