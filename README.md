@@ -1,8 +1,8 @@
-# Atariya Automation
+# CountIT Automation Helper
 
 ## 概要
 
-このフォルダは、Atariya の CountIT 業務を自動化するためのツール群です。
+このリポジトリは、CountIT の一部操作を補助するための automation helper です。
 
 - `pos-discount-automation`
   - CountITの商品割引登録、既存割引の終了、既存割引の置き換えを行います。
@@ -75,7 +75,7 @@ discount と stock で別の CountIT会社を使う場合だけ、`COUNTIT_COMPA
 
 - `input/*.csv` は実運用で使うローカル入力ファイルです。
 - `input/*.csv` はGit管理しません。
-- 各店舗・各担当者がローカルで作成して使います。
+- 各利用者がローカルで作成して使います。
 - `examples/*.csv` はサンプルファイルです。
 - `examples/*.csv` はGit管理します。
 - 初回は `examples` から `input` にコピーして使います。

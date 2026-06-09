@@ -58,8 +58,8 @@ type	product_code	amount	product_name	description
 
 ```text
 type	product_code	amount	product_name	description
-setting				Atariya stock dry-run example
-item	60511	1	Kajyu Gumi Danryoku Plus Budo (Chewy Grape Gummy Candy)	
+setting				Sample stock dry-run
+item	10001	1	Sample Product	
 ```
 
 ## input と examples
