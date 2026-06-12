@@ -5,9 +5,9 @@
   "type": "commonjs",
   "scripts": {
     "discounts": "node src/main.js",
-    "discounts:dry-run": "node src/main.js --mode dry-run --input input/discount_input.csv",
-    "discounts:semi-auto": "node src/main.js --mode semi-auto --input input/discount_input.csv",
-    "discounts:full-auto": "node src/main.js --mode full-auto --input input/discount_input.csv",
+    "discounts:dry-run": "node src/main.js --mode dry-run --input input/discount_input.tsv",
+    "discounts:semi-auto": "node src/main.js --mode semi-auto --input input/discount_input.tsv",
+    "discounts:full-auto": "node src/main.js --mode full-auto --input input/discount_input.tsv",
     "test": "node test/discountLogic.test.js && node test/input.test.js"
   },
   "dependencies": {

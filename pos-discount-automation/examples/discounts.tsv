@@ -1,0 +1,3 @@
+Product Code	Expected Product Name	Discount Price	Start Mode	Start Date	End Date	Operation	Memo
+10001	Sample Product A		NOW			END_ONLY	end active discount only
+10002	Sample Product B	8.2	NOW			CREATE_OR_REPLACE	normal replace

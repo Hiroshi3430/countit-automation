@@ -38,7 +38,8 @@ Windowsで使う場合は、特に以下に注意してください。
 
 - `.env`
 - `.env.local`
-- discount の `input/*.csv`
+- discount の `input/*.tsv`
+  - discount は `--input` で `.csv` も指定できます。
 - stock の `input/*.tsv`
   - stock は `--input` で `.csv` も指定できます。
 - `runs/`
@@ -56,7 +57,7 @@ Windowsで使う場合は、特に以下に注意してください。
 4. `pos-discount-automation` で `npm install` を実行します。
 5. `pos-stock-automation` で `npm install` を実行します。
 6. 必要に応じて Playwright browser をインストールします。
-7. discount は `examples/*.csv`、stock は標準の `examples/*.tsv` を参考に、各プロジェクトのローカル入力ファイルを作成します。stock は必要に応じて `.csv` も読み込めます。
+7. discount と stock は標準の `examples/*.tsv` を参考に、各プロジェクトのローカル入力ファイルを作成します。どちらも必要に応じて `.csv` も読み込めます。
 8. まず `npm test` を実行します。
 9. CountIT操作は必ず `dry-run` から確認します。
 10. `dry-run` 確認後、必要に応じて `semi-auto`、十分に検証した後で `full-auto` を使います。

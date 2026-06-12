@@ -4,7 +4,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { parse } = require('csv-parse/sync');
 
-function parseDelimited(text, delimiter = ',') {
+function parseDelimited(text, delimiter = '\t') {
   const records = parse(text, {
     columns: true,
     skip_empty_lines: true,
@@ -19,11 +19,16 @@ function parseDelimited(text, delimiter = ',') {
 }
 
 function detectDelimiter(inputPathOrUrl) {
-  const pathname = /^https?:\/\//i.test(inputPathOrUrl)
-    ? new URL(inputPathOrUrl).pathname
-    : inputPathOrUrl;
+  const isUrl = /^https?:\/\//i.test(inputPathOrUrl);
+  const url = isUrl ? new URL(inputPathOrUrl) : null;
+  const pathname = url ? url.pathname : inputPathOrUrl;
+  const extension = path.extname(pathname).toLowerCase();
 
-  return path.extname(pathname).toLowerCase() === '.tsv' ? '\t' : ',';
+  if (extension === '.tsv') return '\t';
+  if (extension === '.csv') return ',';
+  if (url?.hostname === 'docs.google.com' && pathname.includes('/spreadsheets/d/')) return ',';
+
+  throw new Error('discount inputは .tsv または .csv の入力ファイルを指定してください');
 }
 
 function toGoogleSheetsCsvUrl(input) {
@@ -38,7 +43,7 @@ function toGoogleSheetsCsvUrl(input) {
 
 async function readInput(inputPathOrUrl) {
   if (!inputPathOrUrl) {
-    throw new Error('Pass --input <csv path or Google Sheets URL>.');
+    throw new Error('Pass --input <tsv/csv path or URL>.');
   }
 
   const delimiter = detectDelimiter(inputPathOrUrl);
@@ -52,7 +57,7 @@ async function readInput(inputPathOrUrl) {
 
     const response = await fetch(csvUrl, { headers });
     if (!response.ok) {
-      throw new Error(`Failed to fetch input CSV: HTTP ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch input file: HTTP ${response.status} ${response.statusText}`);
     }
     return parseDelimited(await response.text(), delimiter);
   }

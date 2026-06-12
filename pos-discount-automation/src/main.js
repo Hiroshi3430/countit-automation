@@ -21,7 +21,7 @@ const { buildLogRecord, createCsvLogger, ensureRunDirs } = require('./logger');
 function parseArgs(argv) {
   const args = {
     mode: 'dry-run',
-    input: '',
+    input: 'input/discount_input.tsv',
     headed: true
   };
 

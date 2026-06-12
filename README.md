@@ -30,7 +30,7 @@
 - CountIT account
 - `Automation/.env`
 - 各自動化ツール用の入力ファイル
-  - discount: `input/*.csv`
+  - discount: `input/*.tsv` 標準、必要に応じて `input/*.csv` も指定可能
   - stock: `input/*.tsv` 標準、必要に応じて `input/*.csv` も指定可能
 
 初期開発と動作確認は macOS で行っています。Windowsでは未検証ですが、Node.js と Playwright ベースのため動作する可能性はあります。Windowsで使う場合は、`npm install`、Playwright browser、`.env` の場所、入力ファイルの文字コード・改行コード、PowerShell/Git Bash のコマンド差に注意してください。
@@ -81,11 +81,11 @@ npx playwright install chromium
 
 ```bash
 cd ..
-cp pos-discount-automation/examples/discounts.csv pos-discount-automation/input/discount_input.csv
+cp pos-discount-automation/examples/discounts.tsv pos-discount-automation/input/discount_input.tsv
 cp pos-stock-automation/examples/stock_input.example.tsv pos-stock-automation/input/stock_input.tsv
 ```
 
-discount の `input/*.csv` と stock の `input/*.tsv` はGitHubに含めません。stock は `--input` で `.csv` も指定できます。各利用者が、自分のCountIT環境と業務ルールに合わせてローカルで作成してください。
+discount と stock の `input/*.tsv` はGitHubに含めません。どちらも `--input` で `.csv` も指定できます。各利用者が、自分のCountIT環境と業務ルールに合わせてローカルで作成してください。
 
 6. ローカルテストを実行します。
 
@@ -164,15 +164,15 @@ discount と stock で別の CountIT会社を使う場合だけ、`COUNTIT_COMPA
 
 ## input と examples の扱い
 
-- discount の `input/*.csv` と stock の `input/*.tsv` は実運用で使うローカル入力ファイルです。stock は必要に応じて `.csv` も読み込めます。
-- discount の `input/*.csv` と stock の `input/*.tsv` はGit管理しません。stock の `input/*.csv` もGit管理しません。
+- discount と stock の `input/*.tsv` は実運用で使うローカル入力ファイルです。どちらも必要に応じて `.csv` も読み込めます。
+- discount と stock の `input/*.tsv` はGit管理しません。互換用の `input/*.csv` もGit管理しません。
 - 各利用者がローカルで作成して使います。
-- discount の `examples/*.csv` と stock の `examples/*.tsv` はサンプルファイルです。
-- discount の `examples/*.csv` と stock の `examples/*.tsv` はGit管理します。
+- discount と stock の `examples/*.tsv` はサンプルファイルです。
+- discount と stock の `examples/*.tsv` はGit管理します。
 - 初回は `examples` から `input` にコピーして使います。
 
 ```bash
-cp pos-discount-automation/examples/discounts.csv pos-discount-automation/input/discount_input.csv
+cp pos-discount-automation/examples/discounts.tsv pos-discount-automation/input/discount_input.tsv
 cp pos-stock-automation/examples/stock_input.example.tsv pos-stock-automation/input/stock_input.tsv
 ```
 
