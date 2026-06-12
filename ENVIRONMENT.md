@@ -27,8 +27,8 @@ Windowsで使う場合は、特に以下に注意してください。
 - 各プロジェクトで `npm install` を実行すること
 - Playwright browser が正しくインストールされていること
 - `Automation/.env` を正しい場所に置くこと
-- CSVの文字コードがUTF-8であること
-- CSVの改行コードによる読み込み差がないこと
+- 入力ファイルの文字コードがUTF-8であること
+- 入力ファイルの改行コードによる読み込み差がないこと
 - PowerShell と Git Bash でコマンドの書き方が一部異なること
 - パス区切りやカレントディレクトリの扱いを確認すること
 
@@ -38,7 +38,9 @@ Windowsで使う場合は、特に以下に注意してください。
 
 - `.env`
 - `.env.local`
-- `input/*.csv`
+- discount の `input/*.csv`
+- stock の `input/*.tsv`
+  - stock は `--input` で `.csv` も指定できます。
 - `runs/`
 - `node_modules/`
 - スクリーンショット
@@ -54,7 +56,7 @@ Windowsで使う場合は、特に以下に注意してください。
 4. `pos-discount-automation` で `npm install` を実行します。
 5. `pos-stock-automation` で `npm install` を実行します。
 6. 必要に応じて Playwright browser をインストールします。
-7. `examples/*.csv` を参考に、各プロジェクトの `input/*.csv` をローカルで作成します。
+7. discount は `examples/*.csv`、stock は標準の `examples/*.tsv` を参考に、各プロジェクトのローカル入力ファイルを作成します。stock は必要に応じて `.csv` も読み込めます。
 8. まず `npm test` を実行します。
 9. CountIT操作は必ず `dry-run` から確認します。
 10. `dry-run` 確認後、必要に応じて `semi-auto`、十分に検証した後で `full-auto` を使います。
@@ -63,4 +65,4 @@ Windowsで使う場合は、特に以下に注意してください。
 
 現時点では、このコードは特定の CountIT 運用を補助するために作られた automation helper です。
 
-CountITの画面構造、運用ルール、入力CSVの形式に合わせて作られており、完全な汎用ツールではありません。別の会社・店舗・業務・CountIT設定で使う場合は、事前に画面構造と業務ルールを確認してください。
+CountITの画面構造、運用ルール、入力ファイルの形式に合わせて作られており、完全な汎用ツールではありません。別の会社・店舗・業務・CountIT設定で使う場合は、事前に画面構造と業務ルールを確認してください。

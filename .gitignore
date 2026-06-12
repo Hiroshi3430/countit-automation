@@ -21,5 +21,6 @@ debug*.png
 
 pos-discount-automation/input/*.csv
 pos-stock-automation/input/*.csv
+pos-stock-automation/input/*.tsv
 !pos-discount-automation/input/.gitkeep
 !pos-stock-automation/input/.gitkeep

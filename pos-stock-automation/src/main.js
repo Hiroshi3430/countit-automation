@@ -12,7 +12,7 @@ const { buildLogRecord, createCsvLogger, ensureRunDirs } = require('./logger');
 function parseArgs(argv) {
   const args = {
     mode: 'dry-run',
-    input: 'input/stock_input.csv',
+    input: 'input/stock_input.tsv',
     headed: true
   };
 

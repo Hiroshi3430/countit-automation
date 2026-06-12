@@ -37,7 +37,7 @@ async function fillInventoryCount(page, { inventoryDescription, records }) {
 
     if (actualProductName !== item.product_name) {
       throw new Error(
-        `商品名不一致: code=${item.product_code}, CSV="${item.product_name}", CountIT="${actualProductName}"`
+        `商品名不一致: code=${item.product_code}, input="${item.product_name}", CountIT="${actualProductName}"`
       );
     }
 
