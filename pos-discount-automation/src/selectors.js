@@ -50,6 +50,28 @@ const selectors = {
       'td[data-overview-column-key="ArtNumber"]',
       'td:nth-child(2)',
       'td:nth-child(3)'
+    ],
+    regularPriceInputCandidates: [
+      'input[name="forms_form_100_SalesPrice"]',
+      'input[name="forms_form_100_Price"]',
+      'input[name*="RegularPrice" i]',
+      'input[name*="SalesPrice" i]',
+      'input[name*="RetailPrice" i]',
+      'input[name*="Price" i]:not([name*="NewPrice" i])'
+    ],
+    regularPriceTextCandidates: [
+      '[data-form-name*="RegularPrice" i]',
+      '[data-form-name*="SalesPrice" i]',
+      '[data-form-name*="RetailPrice" i]',
+      '[data-form-name*="Price" i]',
+      '.formrow:has-text("Regular price")',
+      '.formrow:has-text("Sales price")',
+      '.formrow:has-text("Retail price")',
+      '.formrow:has-text("Price")',
+      'tr:has-text("Regular price") td:last-child',
+      'tr:has-text("Sales price") td:last-child',
+      'tr:has-text("Retail price") td:last-child',
+      'tr:has-text("Price") td:last-child'
     ]
   },
   discounts: {
@@ -88,6 +110,13 @@ const selectors = {
     startDateTimeInput: 'input[name="forms_form_100_StartDate_time"]',
     startDateClockIcon: '.frminputcontainer_forms_form_100_StartDate > .hdc_icon-clock-o',
     newPriceInput: 'input[name="forms_form_100_NewPrice"]',
+    popupCloseCandidates: [
+      '.popup-close:visible',
+      '.popup-header .close:visible',
+      '.popup-header button:has-text("Close"):visible',
+      'button[aria-label="Close"]:visible',
+      'a[aria-label="Close"]:visible'
+    ],
     saveButtonName: 'Save',
     addButtonName: 'Add'
   }

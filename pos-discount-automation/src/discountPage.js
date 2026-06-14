@@ -122,6 +122,7 @@ async function setExistingDiscountEndDate(page, discount, endDate, endTime) {
   const clickCell = row.locator(selectors.discounts.editableRowClickCell).first();
   await clickCell.click();
   const popup = await waitForPopup(page, 'Edit discount');
+  const existingNewPrice = await readNewPriceFromPopup(popup);
   await fillDateTime(page, {
     scope: popup,
     dateSelector: selectors.discounts.endDateInput,
@@ -129,6 +130,7 @@ async function setExistingDiscountEndDate(page, discount, endDate, endTime) {
     dateValue: endDate,
     timeValue: endTime
   });
+  return existingNewPrice;
 }
 
 async function waitForPopup(page, titleText) {
@@ -176,6 +178,50 @@ async function waitForPopupClosed(page, popup) {
   } catch (error) {
     throw dangerousError('Popup did not close cleanly after submit. CountIT save state is unclear.', error);
   }
+}
+
+async function readExistingDiscountNewPrice(page, discount) {
+  let popup = null;
+  try {
+    const row = page.locator(selectors.discounts.editableRows).nth(discount.rowIndex);
+    const clickCell = row.locator(selectors.discounts.editableRowClickCell).first();
+    await clickCell.click();
+    popup = await waitForPopup(page, 'Edit discount');
+    return await readNewPriceFromPopup(popup);
+  } catch (error) {
+    console.log(`existingDiscountNewPrice:notFound reason="${error.message}"`);
+    return '';
+  } finally {
+    if (popup) {
+      await closePopupWithoutSaving(page, popup).catch((error) => {
+        console.log(`existingDiscountNewPrice:closeFailed reason="${error.message}"`);
+      });
+    }
+  }
+}
+
+async function readNewPriceFromPopup(popup) {
+  const newPriceInput = popup.locator(selectors.discounts.newPriceInput);
+  if (!(await newPriceInput.count())) return '';
+
+  const value = String(await newPriceInput.first().inputValue().catch(() => '') || '').trim();
+  if (value) console.log(`existingDiscountNewPrice:found value="${value}"`);
+  else console.log('existingDiscountNewPrice:notFound');
+  return value;
+}
+
+async function closePopupWithoutSaving(page, popup) {
+  for (const selector of selectors.discounts.popupCloseCandidates) {
+    const candidate = popup.locator(selector).last();
+    if (await candidate.isVisible().catch(() => false)) {
+      await candidate.click();
+      await waitForPopupClosed(page, popup);
+      return;
+    }
+  }
+
+  await page.keyboard.press('Escape');
+  await waitForPopupClosed(page, popup);
 }
 
 async function fillDateTime(page, { scope, dateSelector, timeSelector, dateValue, timeValue }) {
@@ -288,6 +334,7 @@ module.exports = {
   DangerousAutomationError,
   fillNewDiscount,
   openDiscounts,
+  readExistingDiscountNewPrice,
   readExistingDiscounts,
   saveOrPause,
   setExistingDiscountEndDate

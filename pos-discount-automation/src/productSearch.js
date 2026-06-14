@@ -34,6 +34,33 @@ async function extractFirstNonEmptyText(scope, selectorCandidates) {
   return '';
 }
 
+async function extractFirstNonEmptyInputValue(scope, selectorCandidates) {
+  for (const selector of selectorCandidates) {
+    const locator = scope.locator(selector);
+    const count = await locator.count();
+    for (let i = 0; i < count; i += 1) {
+      const input = locator.nth(i);
+      try {
+        const value = String(await input.inputValue({ timeout: 500 }) || '').trim();
+        if (value && value !== '-') return value;
+      } catch (_) {
+        // Try next matched element or selector candidate.
+      }
+    }
+  }
+  return '';
+}
+
+async function readRegularPrice(page) {
+  const inputValue = await extractFirstNonEmptyInputValue(page, selectors.products.regularPriceInputCandidates);
+  if (inputValue) return inputValue;
+
+  const textValue = await extractFirstNonEmptyText(page, selectors.products.regularPriceTextCandidates);
+  if (textValue) return textValue;
+
+  return '';
+}
+
 async function tryExtractFirstNonEmptyText(scope, selectorCandidates, context) {
   try {
     return await extractFirstNonEmptyText(scope, selectorCandidates);
@@ -146,7 +173,13 @@ async function searchProduct(page, productCode) {
   await clickCell.click();
   await page.getByText(selectors.navigation.discountsText).waitFor({ state: 'visible' });
   console.log('productDetail:opened');
-  return { actualProductName };
+  const regularPrice = await readRegularPrice(page).catch((error) => {
+    console.log(`regularPrice:notFound reason="${error.message}"`);
+    return '';
+  });
+  if (regularPrice) console.log(`regularPrice:found value="${regularPrice}"`);
+  else console.log('regularPrice:notFound');
+  return { actualProductName, regularPrice };
 }
 
 async function firstExistingCell(row, selectorCandidates) {
