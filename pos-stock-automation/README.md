@@ -97,7 +97,6 @@ runs/<timestamp>/screenshots/
 
 ## Known gaps
 
-- stock save flow には、discount automation と同等の `DangerousAutomationError` guard はまだありません。
 - Google Sheets URL を直接 `--input` に指定する読み込みにはまだ対応していません。ローカルの `.tsv` または `.csv` として保存してから使ってください。
 - CountIT の行IDと入力欄名に対して厳密なセレクタ前提があります。画面構造が変わった場合は、代替セレクタを推測せずに停止します。
 

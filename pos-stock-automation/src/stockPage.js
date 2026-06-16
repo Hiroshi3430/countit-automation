@@ -2,6 +2,20 @@
 
 const { selectors } = require('./selectors');
 
+class DangerousAutomationError extends Error {
+  constructor(message, cause) {
+    super(`Dangerous automation error: ${message}`);
+    this.name = 'DangerousAutomationError';
+    this.cause = cause;
+    this.isDangerousAutomationError = true;
+  }
+}
+
+function dangerousError(message, cause) {
+  if (cause instanceof DangerousAutomationError) return cause;
+  return new DangerousAutomationError(message, cause);
+}
+
 function normalizeStockProductName(value) {
   return String(value ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -90,15 +104,37 @@ async function saveOrPause(page, mode) {
   if (mode === 'dry-run') return;
 
   const button = page.getByRole('button', { name: selectors.stock.addButtonName });
-  await button.waitFor({ state: 'visible' });
+  await assertSafeStockSubmitState(page, button);
 
   if (mode === 'semi-auto') {
     console.log('[semi-auto] Paused before "Add". Review browser, then press Enter here to continue.');
     await waitForEnter();
+    await assertSafeStockSubmitState(page, button);
   }
 
-  await button.click();
-  await page.waitForURL(/stockcount-overview/, { timeout: 15000 });
+  try {
+    await button.click();
+    await page.waitForURL(/stockcount-overview/, { timeout: 15000 });
+  } catch (error) {
+    throw dangerousError('Stock Add failed after submit was attempted. CountIT save state is unclear.', error);
+  }
+}
+
+async function assertSafeStockSubmitState(page, button) {
+  try {
+    if (!/\/products\/stockcount/.test(page.url())) {
+      throw new Error(`Unexpected URL: ${page.url()}`);
+    }
+
+    await page.locator(selectors.stock.descriptionInput).first().waitFor({ state: 'visible', timeout: 3000 });
+    await button.waitFor({ state: 'visible', timeout: 3000 });
+
+    if (!(await button.isEnabled())) {
+      throw new Error('Add button is disabled.');
+    }
+  } catch (error) {
+    throw dangerousError('Stock Add guard failed. Stop before clicking Add.', error);
+  }
 }
 
 function waitForEnter() {
@@ -108,4 +144,10 @@ function waitForEnter() {
   });
 }
 
-module.exports = { fillInventoryCount, normalizeStockProductName, openInventoryCountForm, saveOrPause };
+module.exports = {
+  DangerousAutomationError,
+  fillInventoryCount,
+  normalizeStockProductName,
+  openInventoryCountForm,
+  saveOrPause
+};
