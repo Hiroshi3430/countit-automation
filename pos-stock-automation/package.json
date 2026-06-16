@@ -7,7 +7,7 @@
     "stock:dry-run": "node src/main.js --mode dry-run --input input/stock_input.tsv",
     "stock:semi-auto": "node src/main.js --mode semi-auto --input input/stock_input.tsv",
     "stock:full-auto": "node src/main.js --mode full-auto --input input/stock_input.tsv",
-    "test": "node test/input.test.js"
+    "test": "node test/input.test.js && node test/stockPage.test.js"
   },
   "keywords": [],
   "author": "",
