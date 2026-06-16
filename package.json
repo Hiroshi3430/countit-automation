@@ -1,0 +1,16 @@
+{
+  "name": "countit-automation",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "label-print": "node pos-label-print/src/main.js",
+    "test:label-print": "node pos-label-print/test/logic.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}

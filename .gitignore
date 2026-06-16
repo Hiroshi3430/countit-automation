@@ -23,5 +23,11 @@ pos-discount-automation/input/*.csv
 pos-discount-automation/input/*.tsv
 pos-stock-automation/input/*.csv
 pos-stock-automation/input/*.tsv
+pos-stock-automation/:*
+pos-label-print/logs/
+pos-label-print/debug/
 !pos-discount-automation/input/.gitkeep
 !pos-stock-automation/input/.gitkeep
+
+pos-label-print/recording/
+pos-label-print/recordings/
