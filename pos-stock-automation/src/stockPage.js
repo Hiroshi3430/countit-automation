@@ -1,20 +1,7 @@
 'use strict';
 
 const { selectors } = require('./selectors');
-
-class DangerousAutomationError extends Error {
-  constructor(message, cause) {
-    super(`Dangerous automation error: ${message}`);
-    this.name = 'DangerousAutomationError';
-    this.cause = cause;
-    this.isDangerousAutomationError = true;
-  }
-}
-
-function dangerousError(message, cause) {
-  if (cause instanceof DangerousAutomationError) return cause;
-  return new DangerousAutomationError(message, cause);
-}
+const { DangerousAutomationError, dangerousError } = require('../../pos-common/errors');
 
 function normalizeStockProductName(value) {
   return String(value ?? '').replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
