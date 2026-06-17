@@ -63,7 +63,7 @@
 
 CountIT にアクセスする操作は、必ず以下の順番で進めてください:
 
-1. `--dry-run`: CountIT を読み取り専用で確認し、ログを出力します。保存はしません
+1. `--dry-run`: CountIT を読み取り、ログを出力します。Print labels / Discount / Inventory Count の保存は行いません。ただし `pos-label-print` は Stock Count 編集画面を安全に離脱するため、Stock Count の Save を実行します（在庫確定・inventory processing とは別物）
 2. `--semi-auto`: 処理を実行しますが、最終Save/Addの直前でターミナルが止まります。人間がEnterを押した後にのみ保存されます
 3. (通常モード / `full-auto`): 自動で保存します。`dry-run` と `semi-auto` で十分確認した後のみ使用してください
 
