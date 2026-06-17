@@ -201,7 +201,7 @@ async function selectProductForLabelPrintRow(page, productInput, item, rowNumber
   await productInput.press('Tab');
   if (await waitForProductSelection(page, item, rowNumber, 5000)) return;
 
-  throw new Error(`Autocomplete result not found: row=${rowNumber}, productCode=${item.productCode}, description="${item.description}"`);
+  throw new Error(`Product selection not confirmed after ArrowDown+Enter and Tab: row=${rowNumber}, productCode=${item.productCode}, description="${item.description}"`);
 }
 
 async function waitForProductSelection(page, item, rowNumber, timeout) {
