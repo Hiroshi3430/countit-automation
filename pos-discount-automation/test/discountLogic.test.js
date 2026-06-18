@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const { decideDiscountAction } = require('../src/discountLogic');
+const { decideDiscountAction, pricesMatch } = require('../src/discountLogic');
 
 const baseRow = {
   'Product Code': '12345',
@@ -72,6 +72,60 @@ const endAndCreateWithIgnoredEndExistingValue = decide({
 });
 assert.strictEqual(endAndCreateWithIgnoredEndExistingValue.status, 'READY');
 assert.strictEqual(endAndCreateWithIgnoredEndExistingValue.action, 'END_EXISTING_AND_CREATE_NEW');
+
+const samePriceOpenEndedStillEndsAndCreatesUntilPopupPriceCheck = decide({
+  row: { 'Discount Price': '2.99' },
+  existingDiscounts: [{ rowIndex: 1, startDate: '2026-01-01 10:00:00', endDate: '', price: '2.99' }]
+});
+assert.strictEqual(samePriceOpenEndedStillEndsAndCreatesUntilPopupPriceCheck.status, 'READY');
+assert.strictEqual(samePriceOpenEndedStillEndsAndCreatesUntilPopupPriceCheck.action, 'END_EXISTING_AND_CREATE_NEW');
+
+const samePriceFutureEndDateCurrentlyDoesNotSkip = decide({
+  row: { 'Discount Price': '2.99' },
+  existingDiscounts: [{ rowIndex: 1, startDate: '2026-01-01 10:00:00', endDate: '2026-12-31', price: '€2.99' }]
+});
+assert.notStrictEqual(samePriceFutureEndDateCurrentlyDoesNotSkip.action, 'SKIP_ALREADY_ACTIVE_SAME_PRICE');
+
+const samePricePastEndDateDoesNotSkip = decide({
+  row: { 'Discount Price': '2.99' },
+  existingDiscounts: [{ rowIndex: 1, startDate: '2026-01-01 10:00:00', endDate: '2026-06-04', price: '2.99' }]
+});
+assert.notStrictEqual(samePricePastEndDateDoesNotSkip.action, 'SKIP_ALREADY_ACTIVE_SAME_PRICE');
+
+const activeDifferentPriceDoesNotSkip = decide({
+  row: { 'Discount Price': '2.99' },
+  existingDiscounts: [{ rowIndex: 1, startDate: '2026-01-01 10:00:00', endDate: '', price: '3.49' }]
+});
+assert.notStrictEqual(activeDifferentPriceDoesNotSkip.action, 'SKIP_ALREADY_ACTIVE_SAME_PRICE');
+
+const samePriceMatchedActiveDiscountUsesPopupPriceCheck = decide({
+  row: { 'Discount Price': '2.99' },
+  existingDiscounts: [
+    { rowIndex: 1, startDate: '2026-01-01 10:00:00', endDate: '2026-06-04', price: '3.49' },
+    { rowIndex: 2, startDate: '2026-06-05 10:00:00', endDate: '', price: '2.99' }
+  ]
+});
+assert.strictEqual(samePriceMatchedActiveDiscountUsesPopupPriceCheck.action, 'END_EXISTING_AND_CREATE_NEW');
+
+const activeDiscountFoundEvenWhenLastRowIsEnded = decide({
+  row: { 'Discount Price': '9.4' },
+  existingDiscounts: [
+    { rowIndex: 1, startDate: '2026-01-01 10:00:00', endDate: '', price: '9.40' },
+    { rowIndex: 2, startDate: '2025-01-01 10:00:00', endDate: '2025-01-31', price: '3.49' }
+  ]
+});
+assert.strictEqual(activeDiscountFoundEvenWhenLastRowIsEnded.action, 'END_EXISTING_AND_CREATE_NEW');
+assert.strictEqual(activeDiscountFoundEvenWhenLastRowIsEnded.existingDiscountToEnd.rowIndex, 1);
+
+const samePriceUnparseableEndDateDoesNotSkip = decide({
+  row: { 'Discount Price': '2.99' },
+  existingDiscounts: [{ rowIndex: 1, startDate: '2026-01-01 10:00:00', endDate: 'not-a-date', price: '2.99' }]
+});
+assert.notStrictEqual(samePriceUnparseableEndDateDoesNotSkip.action, 'SKIP_ALREADY_ACTIVE_SAME_PRICE');
+
+assert.strictEqual(pricesMatch('€2,99', '2.99'), true);
+assert.strictEqual(pricesMatch('9.4', '9.40'), true);
+assert.strictEqual(pricesMatch('9,40', '9.40'), true);
 
 const futureStartEndAndCreate = decide({
   row: {
@@ -149,6 +203,15 @@ assert.strictEqual(endOnlyNow.endExistingDateTime, '2026-06-07 18:15:00');
 assert.strictEqual(endOnlyNow.newStartDate, null);
 assert.strictEqual(endOnlyNow.newEndDate, null);
 assert.strictEqual(endOnlyNow.existingDiscountToEnd.rowIndex, 4);
+
+const endOnlySamePriceDoesNotSkip = decide({
+  row: {
+    'Discount Price': '2',
+    Operation: 'END_ONLY'
+  },
+  existingDiscounts: [{ rowIndex: 4, startDate: '2026-01-01 10:00:00', endDate: '-', price: '2' }]
+});
+assert.strictEqual(endOnlySamePriceDoesNotSkip.action, 'END_EXISTING_ONLY');
 
 const endOnlyFutureDateOnly = decide({
   row: {

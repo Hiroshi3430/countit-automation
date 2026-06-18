@@ -89,6 +89,40 @@ function parseReferenceDateTime(value) {
   return parseDateTime(value);
 }
 
+function normalizePrice(value) {
+  const text = String(value ?? '')
+    .trim()
+    .replace(/\s+/g, '');
+  if (!text) return null;
+
+  const match = text.match(/\d[\d.,]*/);
+  if (!match) return null;
+
+  let numericText = match[0];
+  const lastComma = numericText.lastIndexOf(',');
+  const lastDot = numericText.lastIndexOf('.');
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    const decimalSeparator = lastComma > lastDot ? ',' : '.';
+    const thousandsSeparator = decimalSeparator === ',' ? '.' : ',';
+    numericText = numericText.replace(new RegExp(`\\${thousandsSeparator}`, 'g'), '');
+    if (decimalSeparator === ',') numericText = numericText.replace(',', '.');
+  } else if (lastComma !== -1) {
+    numericText = numericText.replace(',', '.');
+  }
+
+  const amount = Number(numericText);
+  if (!Number.isFinite(amount)) return null;
+  return amount;
+}
+
+function pricesMatch(left, right) {
+  const leftPrice = normalizePrice(left);
+  const rightPrice = normalizePrice(right);
+  if (leftPrice === null || rightPrice === null) return false;
+  return Math.abs(leftPrice - rightPrice) < 0.005;
+}
+
 function todayIso(date = new Date()) {
   if (date instanceof Date) return formatLocalIsoDate(date);
   return formatLocalIsoDate(parseDateTime(date));
@@ -196,6 +230,7 @@ function decideDiscountAction({ row, actualProductName, existingDiscounts, today
     return needReview(`Product name mismatch. Expected "${row['Expected Product Name']}", found "${actualProductName}".`);
   }
 
+  const operation = getOperation(row);
   const activeDiscounts = existingDiscounts.filter((discount) => isActiveDiscount(discount, today));
   const futureDiscounts = existingDiscounts.filter((discount) => isFutureDiscount(discount, today));
   const endedDiscounts = existingDiscounts.filter((discount) => (
@@ -207,7 +242,6 @@ function decideDiscountAction({ row, actualProductName, existingDiscounts, today
   }
   const newStart = getNewStartDateTime(row, today);
   const newEnd = getNewEndDateTime(row);
-  const operation = getOperation(row);
 
   if (futureDiscounts.length > 0) {
     return needReview(operation === 'END_ONLY' ? 'Future discount reservation exists' : 'Future discount already exists.');
@@ -288,8 +322,10 @@ module.exports = {
   namesMatch,
   parseDateTime,
   parseDateTimeParts,
+  normalizePrice,
   normalizeText,
   parseIsoDate,
+  pricesMatch,
   todayIso,
   validateRow
 };

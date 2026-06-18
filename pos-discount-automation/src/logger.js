@@ -28,6 +28,8 @@ const LOG_COLUMNS = [
   'End Existing Date',
   'End Existing Time',
   'End Existing DateTime',
+  'Existing Latest Discount Price',
+  'Existing Latest Discount End Date',
   'Review Warnings',
   'Screenshot',
   'Memo'
@@ -129,6 +131,8 @@ function buildLogRecord({ row, mode, actualProductName, decision, status, reason
     'End Existing Date': decision.endExistingDate || '',
     'End Existing Time': decision.endExistingTime || '',
     'End Existing DateTime': decision.endExistingDateTime || '',
+    'Existing Latest Discount Price': decision.existingLatestDiscount?.price || '',
+    'Existing Latest Discount End Date': decision.existingLatestDiscount?.endDate || '',
     'Review Warnings': reviewWarnings.join(' | '),
     Screenshot: screenshot || '',
     Memo: row.Memo || ''

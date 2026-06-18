@@ -7,6 +7,7 @@ const { chromium } = require('playwright');
 const { selectors } = require('./selectors');
 const { login } = require('./auth');
 const { decideDiscountAction } = require('./discountLogic');
+const { buildPopupSamePriceSkipDecision } = require('./discountSkip');
 const { searchProduct } = require('./productSearch');
 const {
   DangerousAutomationError,
@@ -60,25 +61,57 @@ async function processRow({ page, row, mode, logger, screenshotDir }) {
       return;
     }
 
+    if (decision.action === 'SKIP_ALREADY_ACTIVE_SAME_PRICE') {
+      priceInfo = buildPriceInfo({
+        previousPrice: decision.existingLatestDiscount?.price,
+        priceSource: 'existing_latest_discount_price'
+      });
+      logger.append(buildLogRecord({ row, mode, actualProductName, decision, status: 'SKIPPED', priceInfo }));
+      return;
+    }
+
     if (['END_EXISTING_AND_CREATE_NEW', 'END_EXISTING_ONLY'].includes(decision.action)) {
       const activeDiscount = decision.existingDiscountToEnd;
-      if (mode === 'dry-run') {
+      if (decision.action === 'END_EXISTING_AND_CREATE_NEW' || mode === 'dry-run') {
         const previousPrice = await readExistingDiscountNewPrice(page, activeDiscount);
         priceInfo = buildPriceInfo({
           previousPrice,
           priceSource: 'existing_discount_new_price'
         });
-      } else {
+
+        if (decision.action === 'END_EXISTING_AND_CREATE_NEW') {
+          const skipDecision = buildPopupSamePriceSkipDecision({
+            row,
+            decision,
+            previousPriceLabel: priceInfo.previousPriceLabel
+          });
+          if (skipDecision) {
+            logger.append(buildLogRecord({
+              row,
+              mode,
+              actualProductName,
+              decision: skipDecision,
+              status: 'SKIPPED',
+              priceInfo
+            }));
+            return;
+          }
+        }
+      }
+
+      if (mode !== 'dry-run') {
         const previousPrice = await setExistingDiscountEndDate(
           page,
           activeDiscount,
           decision.endExistingDate,
           decision.endExistingTime
         );
-        priceInfo = buildPriceInfo({
-          previousPrice,
-          priceSource: 'existing_discount_new_price'
-        });
+        if (decision.action === 'END_EXISTING_ONLY') {
+          priceInfo = buildPriceInfo({
+            previousPrice,
+            priceSource: 'existing_discount_new_price'
+          });
+        }
         await saveOrPause(page, mode, selectors.discounts.saveButtonName);
       }
     } else if (decision.action === 'CREATE_NEW') {

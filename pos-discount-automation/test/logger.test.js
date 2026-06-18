@@ -64,4 +64,32 @@ assert.strictEqual(warningRecord['Price Source'], 'existing_discount_new_price')
 assert.strictEqual(warningRecord['Price Change'], '');
 assert.strictEqual(warningRecord['Review Warnings'], 'price_not_found');
 
+const skippedRecord = buildLogRecord({
+  row,
+  mode: 'dry-run',
+  actualProductName: 'Sample Product',
+  decision: {
+    status: 'READY',
+    action: 'SKIP_ALREADY_ACTIVE_SAME_PRICE',
+    reason: 'already_active_same_price',
+    existingLatestDiscount: {
+      price: '€2.50',
+      endDate: ''
+    }
+  },
+  status: 'SKIPPED',
+  priceInfo: {
+    previousPrice: '2.50',
+    previousPriceLabel: '€2.50',
+    priceSource: 'existing_latest_discount_price',
+    reviewWarnings: []
+  }
+});
+
+assert.strictEqual(skippedRecord.Status, 'SKIPPED');
+assert.strictEqual(skippedRecord.Action, 'SKIP_ALREADY_ACTIVE_SAME_PRICE');
+assert.strictEqual(skippedRecord.Reason, 'already_active_same_price');
+assert.strictEqual(skippedRecord['Existing Latest Discount Price'], '€2.50');
+assert.strictEqual(skippedRecord['Existing Latest Discount End Date'], '');
+
 console.log('logger tests passed');
