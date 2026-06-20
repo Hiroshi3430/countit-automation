@@ -46,7 +46,7 @@ git status --short  # コミット前に必ず確認
 - [ ] `--semi-auto` で最終確認後に `full-auto` 実行
 - [ ] inventory processing（+Process ボタン等）は**絶対実行禁止**
 
-**詳細は AGENTS.md の「CountIT 本番操作ルール」を参照。**
+**詳細は AGENTS.md の「CountIT 本番操作に関する規則」を参照。**
 
 ---
 
