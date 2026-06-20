@@ -1,6 +1,8 @@
-# AGENTS.md
+# countit-automation AGENTS.md
 
 このファイルは、このリポジトリで作業するすべてのAIエージェント（Claude Code、Codex、その他）に共通するセキュリティ規則と作業ガイドラインです。
+
+各ルールの詳細は、特に明記がない限り、親の `Atariya/AGENTS.md` も参照してください。ただし、本ファイルは **単独で完結** するように設計されています。
 
 ---
 
@@ -102,17 +104,224 @@ git ls-files pos-label-print/
 
 ---
 
-## Security rules (English summary)
+## リファクタリング安全ルール
 
-- Never read, print, summarize, copy, edit, or expose `.env` or `.env.local` files.
-- Never run commands such as `cat .env`, `less .env`, `grep COUNTIT .env`, or anything that prints secrets.
-- Do not include environment variable values in responses, logs, tests, README files, screenshots, or generated files.
-- Use `.env.example` when you need to inspect or document required environment variables.
-- If environment variables are needed, only check whether required variable names exist, not their values.
-- If a task appears to require reading `.env`, stop and ask for confirmation.
-- Keep `.env` and `.env.local` ignored by Git.
-- Never run CountIT-accessing browser commands without explicit human approval.
-- Never execute stock finalization, inventory processing, or any equivalent action (+Process or equivalent button/link/action) in any tool or mode. This applies regardless of whether such a button is visible on screen.
-- Source files such as `pos-common/auth.js` are login logic and may be read and edited. However, actual credentials, cookies, session tokens, and generated auth data must never be read, printed, copied, or committed.
-- Always run `node --check` and logic tests after code changes. Use subshell form: `( cd pos-discount-automation && npm test )` to avoid changing the working directory.
-- Never commit logs, debug screenshots, recordings, generated auth files, session files, or operational input data.
+変数名・関数名・定数名・設定キーなど既存の識別子を変更する場合、以下の手順が必須です。
+
+このルールは、親の `Atariya/AGENTS.md` でも定義されていますが、本ファイルは単独で完結させるため、完全版を記載します。
+
+### 1. 変更前の影響範囲調査
+
+識別子を変更する前に、必ず以下を実施してください:
+
+- 旧識別子への参照を全文検索する。
+- 新識別子への参照も確認する。
+- 参照箇所の一覧を報告する。
+- 変更対象外の範囲への影響有無をまとめる。
+
+例:
+
+```bash
+rg "旧識別子"
+rg "新識別子"
+```
+
+### 2. 変更後の旧識別子残存確認
+
+変更後、旧識別子を全文検索してください。
+
+例:
+
+```bash
+rg "旧識別子"
+```
+
+期待される結果:
+
+```text
+0 matches
+```
+
+旧識別子が残っている場合は、その理由を説明してください。
+
+### 3. 差分レビュー（必須）
+
+変更後、必ず以下を報告してください:
+
+- 変更ファイル
+- 主な変更内容
+- 影響範囲
+- 想定リスク
+- `git diff` の要約
+
+### 4. 構文チェック
+
+可能な場合は構文チェックを実行してください。
+
+例:
+
+```bash
+node --check pos-common/*.js
+node --check pos-discount-automation/src/*.js
+node --check pos-stock-automation/src/*.js
+node --check pos-label-print/src/*.js
+```
+
+構文チェックに合格してもランタイムの動作を保証するものではないことを必ず明記してください。
+
+### 5. 実行時エラーリスク確認
+
+以下の一般的な実行時エラーを確認してください:
+
+- `ReferenceError`
+- `TypeError`
+- `undefined` 参照
+- `null` 参照
+- 存在しない設定キー
+- 存在しないセレクタ・DOM 要素
+
+### 6. 変更後のローカル確認
+
+コード変更後、必ず以下を実行してください:
+
+```bash
+node --check pos-common/*.js
+node --check pos-discount-automation/src/*.js
+node --check pos-stock-automation/src/*.js
+node --check pos-label-print/src/*.js
+
+( cd pos-discount-automation && npm test )
+( cd pos-stock-automation && npm test )
+npm run test:label-print
+```
+
+コミットはレビュー完了後のみ実行してください。
+
+---
+
+## Spreadsheet ↔ GAS 整合性ルール
+
+countit-automation は Node.js プロジェクトですが、Atariya ワークスペースの他のプロジェクト（GAS プロジェクト）と連携する可能性があります。本ルールは **参考情報** としてここに記載します。
+
+### Atariya 内での GAS プロジェクト連携時
+
+countit-automation から他の GAS プロジェクトのスプレッドシートと連携する場合:
+
+- API や Webhook を使う強い理由がない限り、最初の統合レイヤーとして Google Sheets を優先してください。
+- 実装前に明確なデータ契約を定義してください。
+- ソースデータ・出力フォーマット・対象シート・列定義・更新頻度・エラー処理を文書化してください。
+
+### 複数 Spreadsheet 連携確認
+
+複数のスプレッドシートを連携させる場合は、親の `Atariya/AGENTS.md` の「Spreadsheet ↔ GAS 整合性ルール」を参照してください。
+
+特に以下を確認してください:
+
+- `openById()` で参照しているスプレッドシート ID が正しいか
+- `IMPORTRANGE` 式の参照先 ID が正しいか
+- 外部シート書き込み時のアクセス権限は確保されているか
+
+### レビュー時の必須報告
+
+Spreadsheet との連携に変更がある場合、以下を報告してください:
+
+```text
+複数 Spreadsheet 連携確認:
+- openById() 参照: [変更有無]
+- IMPORTRANGE 式: [変更有無]
+- 外部シート書き込み: [変更有無]
+```
+
+---
+
+## schema 更新ルール
+
+このプロジェクトは Node.js プロジェクトであり、直接的なシート構造管理の対象外です。
+
+ただし、連携している GAS プロジェクトのシート構造が変わった場合:
+
+- 親の `Atariya/AGENTS.md` の「schema 更新ルール」を参照してください。
+
+countit-automation 独自の schema ファイル（`docs/schema.json` 等）がある場合:
+
+- コード構造・入力フォーマット・出力フォーマットの変更時に schema ファイルの更新要否を確認してください。
+
+---
+
+## README 整合性ルール
+
+以下の変更を行う場合、README の更新要否を必ず確認してください:
+
+### 対象となる変更
+
+- 新機能追加
+- 設定変更（`.env` のキー追加・変更）
+- 実行手順変更
+- 操作モード変更
+- 新しいコマンド追加
+- インストール手順変更
+- API・外部連携変更
+
+### レビュー時の報告
+
+レビュー時に必ず以下のいずれかを報告してください:
+
+```text
+README 更新必要
+```
+
+理由も含めて記載例:
+
+```text
+README 更新必要
+理由: 新しい実行モード（--append-to-label-print）を追加したため、使用例セクションを更新
+```
+
+または
+
+```text
+README 更新不要
+理由: 内部ロジック変更のみで、ユーザー操作に影響なし
+```
+
+### README 更新が必要な判定基準
+
+以下のいずれかに該当する場合、README 更新が必要です:
+
+- ユーザー（スタッフ）が実行する手順に変更がある
+- セットアップ・インストール手順に変更がある
+- `.env` キーに追加・削除がある
+- 実行時の入力形式・出力形式に変更がある
+- 注意事項・制限事項に追加がある
+- 前提条件に変更がある
+- 新しいコマンド・実行モードが追加される
+
+### README 更新が不要な判定基準
+
+以下のいずれかに該当する場合、README 更新は不要な場合が多いです:
+
+- 内部関数の変更のみ
+- リファクタリングで振る舞いが変わらない
+- パフォーマンス改善のみ
+- バグ修正で機能が意図通りになるだけ
+- コメント・ドキュメント内部の改善のみ
+
+---
+
+## コード変更レビュー報告フォーマット
+
+コード変更のレビュー時は、必ず以下を報告してください:
+
+| 項目 | 内容 |
+|------|------|
+| 変更ファイル | （変更したファイルの一覧） |
+| 影響範囲 | （影響する機能・モジュール） |
+| GAS 変更有無 | 対象外（Node.js プロジェクト） |
+| シート変更有無 | 有 / 無 / 対象外 |
+| 複数シート連携変更有無 | 有 / 無 / 対象外 |
+| schema 更新要否 | 必要 / 不要 / 対象外 |
+| README 更新要否 | 必要 / 不要 |
+| commit 可否 | 可 / 要確認 / 不可 |
+| clasp push 可否 | 対象外（Node.js プロジェクト） |
+
+---

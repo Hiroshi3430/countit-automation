@@ -1,110 +1,158 @@
-# CLAUDE.md
+# countit-automation - Claude Code 作業チェックリスト
 
-このファイルは Claude Code（AIエージェント）向けの作業指示です。
-複数AIエージェント共通のセキュリティ規則は `AGENTS.md` を参照してください。
+このファイルは Claude Code の **実行チェックリスト** です。
+ポリシー・ルール詳細・背景説明は `AGENTS.md` を参照してください。
 
-## プロジェクト概要 / Project overview
+本ファイルは基本チェックだけで作業開始できるように設計されています。詳細判断は `AGENTS.md` を参照してください。
 
-このリポジトリは、Atariya の業務向け CountIT 操作補助ツールをまとめたものです。
-汎用ライブラリではなく、特定のCountIT環境・業務ルール・画面構造に依存しています。
+---
 
-**安定性と既存業務ロジックの保護を最優先にしてください。積極的なリファクタリングより、動作確認済みの挙動を壊さないことを優先します。**
+## プロジェクト概要
 
-## ディレクトリ構成 / Main directories and files
+- CountIT 本番画面を直接操作する Node.js ツール
+- `pos-discount-automation/`: 割引作成・終了・置換
+- `pos-stock-automation/`: Inventory Counts 入力補助
+- `pos-label-print/`: Print labels 作成
+- `pos-common/`: 共通ログイン処理
 
-- `README.md`: セットアップ・操作・安全注意・環境ノート（日本語）
-- `ENVIRONMENT.md`: 開発環境ノートと移行注意事項
-- `AGENTS.md`: 全AIエージェント共通のセキュリティ規則
-- `CLAUDE.md`: Claude Code向け作業指示（このファイル）
-- `pos-common/`: CountIT ログイン・会社切替の共通処理
-- `pos-discount-automation/`: 割引作成・終了・置換ワークフロー
-  - `src/`: 割引automation本体
-  - `test/`: Node `assert` テスト（割引ロジック・入力解析・ロガー）
-  - `examples/`: サンプル割引入力ファイル（コミット管理）
-  - `input/`: ローカル業務入力ファイル（コミット不可・中身を読まない）
-- `pos-stock-automation/`: Inventory Counts 入力補助ワークフロー
-  - `src/`: stock automation本体
-  - `test/`: Node `assert` テスト
-  - `examples/`: サンプル在庫入力ファイル（コミット管理）
-  - `input/`: ローカル業務入力ファイル（コミット不可・中身を読まない）
-- `pos-label-print/`: Stock CountからPrint labels作成ワークフロー
-  - `src/`: label print automation本体
-  - `test/`: Node `assert` テスト（ロジック・引数解析）
-  - `logs/`: 実行ログ（ローカルのみ・コミット不可）
-  - `debug/`: デバッグ用スクリーンショット（ローカルのみ・コミット不可）
-  - `recordings/`: Playwright録画ファイル（ローカルのみ・コミット不可）
+**安定性最優先。既存ロジック保護を優先。**
 
-生成物（ローカルのみ存在する可能性あり）: `node_modules/`, `runs/`, スクリーンショット, Playwrightレポート, テスト結果
+---
 
-## 業務コンテキスト / Business context
+## 安全規則 - 実行前チェック
 
-- `pos-discount-automation`: TSV/CSV入力から CountIT 商品割引を登録・終了・置換します
-- `pos-stock-automation`: TSV/CSV入力から CountIT Inventory Counts の入力を補助します
-- `pos-label-print`: CountIT の Stock Count から Current stock が 0 以下の商品を検出し、Print labels ファイルを作成します（値札印刷用途）
-- `pos-common`: CountIT ログイン・会社切替の共通処理です
+### 機密ファイル
 
-入力ファイルは業務データであり、意図的にローカル管理です。
-CountIT のブラウザフローは、画面構造・会社設定・商品コード・商品名・業務ルールに依存します。
+- [ ] `.env` / `.env.local` を読み取らない
+- [ ] 認証ファイル（`auth.json` 等）を読み取らない
+- [ ] 環境変数の**値**を出力・ログ・README に含めない
+- [ ] `.env.example` のみ参照
 
-**pos-label-print 固有の注意:**
-- Stock Count は「読み取り後に Save して離脱」するだけです。Stock Count の確定・在庫反映・inventory processing に相当する操作は絶対に実行しません
-- Print labels も「Save のみ」です。在庫確定・在庫処理・inventory processing に相当するボタン・リンク・アクションは一切実行しません
-- Current stock が 0 以下の商品を label print 対象として検出します（0 を含む）
+### 生成物・業務データ
 
-## 安全規則 / Safety rules
-
-- `.env`、`.env.local`、セッションファイル、スクリーンショット、ログ、業務入力ファイルは読み取り・出力・コミットをしないでください
-- `pos-common/auth.js` 等の `auth.js` はログイン処理のソースコードであり読み取り・編集の対象です。ただし、実際の認証情報（メール・パスワード・クッキー・セッショントークン・生成された auth データ）は読み取り・出力・コミットしてはいけません
-- `.env.example` は環境変数名を文書化する目的にのみ使用してください
-- 環境変数の値をレスポンス・ログ・テスト・ドキュメント・スクリーンショットに含めないでください
-- スプレッドシートデータや業務入力データを上書きしないでください
-- 明示的な確認なしにファイル・トリガー・シート・ログ・データを削除しないでください
-- `full-auto` ワークフローは高リスクです。必ず `dry-run` → `semi-auto` → `full-auto` の順で進めてください
-- **在庫確定・在庫反映・inventory processing に相当する操作（+Process または同等のボタン・リンク・アクション）は、どのツール・どのモードでも絶対に実行してはいけません。** `pos-label-print` は Stock Count を読み取って Print labels を Save するだけです。Stock Count の確定や在庫反映は行いません
-- **CountIT 本番画面を操作するコマンドは、人間が明示的に許可した場合のみ実行してください**
-
-## Claude Code が避けるべきこと / What Claude Code should avoid
-
-- レビュー依頼がない限り、ソースコードを勝手に修正しないでください
-- 割引判定ロジック・商品名マッチング・日時処理・Save/Add 挙動・在庫処理境界を安易に変更しないでください
-- エクスポート関数名・スクリプトエントリポイント・パッケージスクリプト・ファイル名を確認なしに変更しないでください
-- `input/*.tsv`, `input/*.csv`, `.env*`, `runs/`, スクリーンショット, ログ, その他プライベート・生成物を検査しないでください
-- 大規模リファクタリング・新依存関係追加・TypeScript移行・フォーマット変更・Playwright Test移行を明示的な依頼なしに行わないでください
-- CountIT の UI ラベル・セレクタ・会社設定が安定していると証拠なしに仮定しないでください
-
-## コーディング規約 / Coding conventions
-
-- ランタイムは CommonJS モジュールの Node.js です（`'use strict'`・`require(...)`・`module.exports`）
-- テストは Playwright Test ではなく、`assert` を使った素の Node スクリプトです
-- TSV/CSV 解析は `csv-parse/sync` を使います（pos-stock / pos-discount）
-- `pos-label-print` は引数からパラメータを受け取り、入力ファイルは不要です
-- モジュール分割: `args.js`, `logic.js`, `selectors.js`, `logger.js`, `*Page.js` の形を維持してください
-- コメントは「なぜそうするか」が自明でない場合のみ記述します
-- CommonJS の `fs/promises` hint が IDE に表示されることがありますが、意図的な設計です
-
-## 実行・テスト・構文確認 / How to run, test, and lint
-
-### 依存関係のインストール
+- [ ] `input/*.tsv`, `input/*.csv` をコミットしない
+- [ ] `logs/`, `debug/`, `runs/` をコミットしない
+- [ ] `node_modules/` をコミットしない
 
 ```bash
-# pos-label-print はリポジトリルートから実行
-npm install
-npx playwright install chromium
-
-# pos-discount-automation
-cd pos-discount-automation
-npm install
-npx playwright install chromium
-
-# pos-stock-automation
-cd pos-stock-automation
-npm install
-npx playwright install chromium
+git status --short  # コミット前に必ず確認
 ```
 
-### CountIT にアクセスしないローカル確認（必ず修正後に実行）
+### CountIT 本番操作
 
-すべてのコマンドは **リポジトリルート** で実行してください。
+- [ ] `npm run label-print` は人間の明示的許可後のみ実行
+- [ ] `npm run stock:*` / `npm run discounts:*` も同様
+- [ ] 初回は必ず `--dry-run` で実行
+- [ ] `--semi-auto` で最終確認後に `full-auto` 実行
+- [ ] inventory processing（+Process ボタン等）は**絶対実行禁止**
+
+**詳細は AGENTS.md の「CountIT 本番操作ルール」を参照。**
+
+---
+
+## 変更前チェック
+
+- [ ] 対象モジュール（pos-discount / pos-stock / pos-label-print 等）明記
+- [ ] 変更理由を説明
+- [ ] 影響範囲を分析
+- [ ] 分析のみ依頼時はコード変更しない
+
+---
+
+## リファクタリング安全 - チェックリスト
+
+識別子（変数名・関数名等）変更時：
+
+### 変更前
+
+- [ ] `rg "旧識別子"` で全文検索
+- [ ] `rg "新識別子"` で既存使用確認
+- [ ] 影響箇所を一覧化
+
+### 変更後
+
+- [ ] 構文チェック：`node --check pos-*/src/*.js`
+- [ ] `rg "旧識別子"` で残存確認（0 matches 期待）
+- [ ] テスト実行：`cd pos-discount-automation && npm test` 等
+- [ ] `git diff` で差分確認
+
+**詳細は AGENTS.md の「リファクタリング安全ルール」を参照。**
+
+---
+
+## Spreadsheet ↔ GAS 連携確認 - チェックリスト
+
+複数シート連携時（確認事項の要約）：
+
+- [ ] `openById()` で参照しているシート ID が正しいか
+- [ ] `IMPORTRANGE` 式の参照先が正しいか
+- [ ] 連携先シート構造に変更がないか
+
+**詳細は Atariya/AGENTS.md の「複数 Spreadsheet 連携確認」を参照。**
+
+---
+
+## schema 更新確認 - チェックリスト
+
+（countit-automation は Node.js プロジェクトですが、schema ファイルがある場合）
+
+- [ ] `docs/schema.json` が存在するか
+- [ ] 入出力フォーマット構造に変更があるか
+- [ ] 更新必要/不要を報告に記載
+
+**詳細は AGENTS.md を参照。**
+
+---
+
+## README 更新確認 - チェックリスト
+
+以下の変更時：
+
+- [ ] 新機能追加
+- [ ] `.env` キー追加・変更
+- [ ] 実行手順変更
+- [ ] 新コマンド追加
+
+判定：
+
+- [ ] ユーザー操作に影響あり → README 更新必要
+- [ ] 内部実装変更のみ → README 更新不要
+
+**詳細は AGENTS.md の「README 整合性ルール」を参照。**
+
+---
+
+## レビュー報告チェックリスト
+
+コード変更レビュー時、必ず以下を報告：
+
+| 項目 | 内容 |
+|------|------|
+| 変更ファイル | （一覧） |
+| 影響範囲 | （機能・モジュール） |
+| シート連携変更 | 有 / 無 / 対象外 |
+| schema 更新 | 必要 / 不要 / 対象外 |
+| README 更新 | 必要 / 不要 |
+| commit 可否 | 可 / 要確認 / 不可 |
+| 本番操作テスト | dry-run 済 / semi-auto 済 / 不要 |
+
+---
+
+## コーディング規約 - 確認項目
+
+- [ ] CommonJS（`require` / `module.exports`）を使用
+- [ ] テストは `assert` ライブラリ使用（Playwright Test ではない）
+- [ ] TSV/CSV 解析は `csv-parse/sync` 使用
+- [ ] モジュール分割：`args.js`, `logic.js`, `selectors.js`, `*Page.js` 構造維持
+- [ ] コメントは「なぜ」が非自明な場合のみ記述
+
+**詳細は AGENTS.md を参照。**
+
+---
+
+## テスト・構文確認 - チェックリスト
+
+修正後、**リポジトリルート**で実行：
 
 ```bash
 # 構文チェック
@@ -113,60 +161,42 @@ node --check pos-discount-automation/src/*.js
 node --check pos-stock-automation/src/*.js
 node --check pos-label-print/src/*.js
 
-# ロジックテスト（サブシェルで実行することでカレントディレクトリが変わりません）
+# テスト実行
 ( cd pos-discount-automation && npm test )
 ( cd pos-stock-automation && npm test )
 npm run test:label-print
+
+# コミット前確認
+git status --short
+git diff --stat
 ```
 
-### CountIT にアクセスするコマンド（人間の明示的な許可が必要）
+- [ ] すべてのチェックが PASS
+- [ ] 構文エラーなし
+- [ ] テスト失敗なし
 
-```bash
-# label-print（リポジトリルートから実行）
-npm run label-print -- --stock-count "<Stock Count名>" --dry-run
-npm run label-print -- --stock-count "<Stock Count名>" --semi-auto --limit 3
-npm run label-print -- --stock-count "<Stock Count名>"
-npm run label-print -- --append-to-label-print "<既存ラベル名>" --stock-count "<Stock Count名>" --semi-auto
+---
 
-# discount
-cd pos-discount-automation
-npm run discounts:dry-run
-npm run discounts:semi-auto
-npm run discounts:full-auto
+## Git ワークフロー - チェックリスト
 
-# stock
-cd pos-stock-automation
-npm run stock:dry-run
-npm run stock:semi-auto
-npm run stock:full-auto
-```
+- [ ] クリーンな作業ツリーから開始
+- [ ] 変更を要求範囲に絞る
+- [ ] `.gitignore` 対象ファイルをコミットしない
+- [ ] PR説明に実行テスト・確認内容を記載
 
-CountIT にアクセスするコマンドは、人間が明示的に要求し、対象入力・モードを確認した後のみ実行してください。必ず `dry-run` を優先してください。
+**詳細は AGENTS.md の「生成物・業務データのコミット禁止」と「コード変更レビュー報告フォーマット」を参照。**
 
-## Git ワークフロー / Git workflow for safe PRs
+---
 
-- クリーンな作業ツリーから開始してください
-- 変更は要求された範囲に絞ってください
-- `.gitignore` 対象ファイル（生成物・`runs/`・スクリーンショット・ログ・`.env*`・実業務入力データ）はコミットしないでください
-- コミット前に `git status --short` と `git diff` で確認してください
-- PR説明には実行したテスト・確認コマンドを記載してください
-- 挙動に影響する変更・CountITワークフローのリスク・必要な手動確認を文書化してください
+## 実行禁止項目 - 確認
 
-**コミットしてよいファイル:** `src/`, `test/`, `examples/`, `README.md`, `CLAUDE.md`, `AGENTS.md`, `.env.example`, `.gitignore`, `package.json`, `package-lock.json`, `config.example.json`
+以下を実行しないこと：
 
-**コミットしてはいけないファイル:** `.env`, `input/*.tsv`, `input/*.csv`, `logs/`, `debug/`, `recordings/`, スクリーンショット, 認証ファイル, セッションファイル
+- [ ] 依頼なしにソースコード修正
+- [ ] 割引判定ロジック・商品名マッチングの安易な変更
+- [ ] 関数名・エントリポイント・ファイル名の無確認変更
+- [ ] `input/*.tsv`, `.env*`, スクリーンショット等の検査
+- [ ] 大規模リファクタリング・新依存関係・TypeScript移行を無確認実行
+- [ ] inventory processing（+Process 等）の実行
 
-## レビュー重点 / Recommended review scope for Claude Code
-
-以下に重点的にレビュー工数をかけてください:
-
-- `pos-discount-automation/src/discountLogic.js` の業務ルール保護
-- 各 `src/input.js` の入力バリデーションとデリミタ処理
-- `dry-run`・`semi-auto`・`full-auto`・Save/Add・確認ダイアログ・stock Process 周辺の安全挙動
-- `pos-label-print/src/labelPrintPage.js` の商品選択・描写セル確認・重複チェック・append モード
-- `pos-common/` の共有ログイン・会社切替変更
-- `selectors.js` のセレクタ脆弱性と CountIT UI の前提
-- 日付・重複商品コード・操作モード・失敗パスのテストカバレッジ
-- 機密情報・プライベートデータの意図しない露出
-
-不明な点は「Unknown / needs confirmation」と記載し、推測しないでください。
+**詳細は AGENTS.md を参照。**
