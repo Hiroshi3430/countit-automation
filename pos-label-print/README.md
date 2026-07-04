@@ -21,13 +21,25 @@ CountIT の Stock Count を読み取り、**Current stock が 0 以下の商品*
 
 ## コマンド（countit-automation 直下から実行）
 
-正式な実行方法は `npm run label-print:<mode> -- --stock-count "<Stock Count名>"` に統一します。
-既存の `npm run label-print -- --stock-count "<Stock Count名>" --dry-run` 形式（フラグを自分で指定する方式）も後方互換として引き続き使用できます。
+正式な実行方法は、**位置引数**で Stock Count 名を渡す形式です。
+
+```bash
+npm run label-print:<mode> -- "<Stock Count名>"
+npm run label-print:<mode> -- "<Stock Count名>" "<Print Label名>"
+npm run label-print:<mode> -- "<Stock Count名>" add "<既存Print Label名>"
+```
+
+- `<mode>` は `dry-run` / `semi-auto` / `full-auto`
+- 1個目の位置引数: 読み取り対象の Stock Count 名（必須）
+- 2個目の位置引数が `add` 以外: 新規作成する Print Label 名（省略時は Stock Count 名と同じ）
+- 2個目の位置引数が `add`: 3個目の位置引数を追記先の既存 Print Label 名として扱う（appendモード）
+
+既存の `--stock-count` / `--label-print-name` / `--append-to-label-print` / `--dry-run` / `--semi-auto` によるオプション指定も後方互換として引き続き使用できます（[引数一覧](#引数一覧)参照）。位置引数とこれらのオプションを同時に指定するとエラーになります。
 
 ### 内容確認のみ（Print labels を作成・保存しない）
 
 ```bash
-npm run label-print:dry-run -- --stock-count "<Stock Count名>"
+npm run label-print:dry-run -- "<Stock Count名>"
 ```
 
 - Stock Count を開き、Current stock ≤ 0 の商品一覧をログに出力します
@@ -38,7 +50,7 @@ npm run label-print:dry-run -- --stock-count "<Stock Count名>"
 ### 少数件数でのテスト（推奨：初回は必ずこちら）
 
 ```bash
-npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --limit 3
+npm run label-print:semi-auto -- "<Stock Count名>" --limit 3
 ```
 
 - 全件を検出しますが、Print labels への追加は最初の 3 件のみ
@@ -47,13 +59,13 @@ npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --limit 3
 ### 全件 semi-auto
 
 ```bash
-npm run label-print:semi-auto -- --stock-count "<Stock Count名>"
+npm run label-print:semi-auto -- "<Stock Count名>"
 ```
 
-### 全件 通常モード（自動 Save）
+### 全件 full-auto（自動 Save）
 
 ```bash
-npm run label-print:full-auto -- --stock-count "<Stock Count名>"
+npm run label-print:full-auto -- "<Stock Count名>"
 ```
 
 `dry-run` と `semi-auto` で十分確認した後のみ使用してください。
@@ -78,9 +90,7 @@ npm run label-print:full-auto -- --stock-count "<Stock Count名>"
 別の Stock Count の商品を既存の Print labels ファイルに追記します。
 
 ```bash
-npm run label-print:semi-auto -- \
-  --append-to-label-print "<Stock Count名>" \
-  --stock-count "<別のStock Count名>"
+npm run label-print:semi-auto -- "<別のStock Count名>" add "<既存Print Label名>"
 ```
 
 append モードでの動作:
@@ -97,23 +107,43 @@ append モードでの動作:
 Print labels ファイル名を Stock Count 名と別に指定できます:
 
 ```bash
-npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --label-print-name "新入荷ラベル"
+npm run label-print:semi-auto -- "<Stock Count名>" "新入荷ラベル"
 ```
 
 ---
 
 ## 引数一覧
 
+### 位置引数（正式な方法）
+
+| 位置引数 | 必須 | 説明 |
+|------|------|------|
+| 1個目: `"<Stock Count名>"` | ○ | 読み取り対象の Stock Count 名 |
+| 2個目（`add` 以外）: `"<Print Label名>"` | × | 新規作成時のラベル名（省略時は Stock Count 名） |
+| 2個目: `add` | × | 3個目を追記先の既存 Print Label 名として扱う（append モード） |
+| 3個目（2個目が `add` の場合）: `"<既存Print Label名>"` | △ | `add` を指定した場合は必須 |
+
+モードは `npm run label-print:<mode>` の `<mode>`（`dry-run` / `semi-auto` / `full-auto`）で指定します。
+
+### オプション引数
+
 | 引数 | 必須 | 説明 |
 |------|------|------|
-| `--stock-count "<名前>"` | ○ | 読み取り対象の Stock Count 名 |
-| `--dry-run` | △ | 内容確認のみ（`--semi-auto` と同時使用不可） |
-| `--semi-auto` | △ | Save前にターミナルで確認停止（`--dry-run` と同時使用不可） |
 | `--limit N` | × | 追加する商品数を最初のN件に制限 |
-| `--append-to-label-print "<名前>"` | × | 追記先の既存 Print labels 名（`--label-print-name` と同時使用不可） |
-| `--label-print-name "<名前>"` | × | 新規作成時のラベル名（省略時は Stock Count 名）|
 | `--headless` | × | ブラウザを非表示で実行 |
 | `--slow-mo <ms>` | × | 操作をスローモーションで実行（デバッグ用） |
+
+### 旧オプション形式（後方互換）
+
+以下は引き続き使用できますが、位置引数と同時に指定するとエラーになります。
+
+| 引数 | 説明 |
+|------|------|
+| `--stock-count "<名前>"` | 読み取り対象の Stock Count 名（位置引数1個目に相当） |
+| `--label-print-name "<名前>"` | 新規作成時のラベル名（位置引数2個目に相当。`--append-to-label-print` と同時使用不可） |
+| `--append-to-label-print "<名前>"` | 追記先の既存 Print labels 名（位置引数の `add` 形式に相当。`--label-print-name` と同時使用不可） |
+| `--dry-run` | `--mode dry-run` と同じ（`--semi-auto` および `--mode` と同時使用不可） |
+| `--semi-auto` | `--mode semi-auto` と同じ（`--dry-run` および `--mode` と同時使用不可） |
 
 ---
 
@@ -156,7 +186,7 @@ Difference・New stock 列はオプションです。空でも処理を継続し
 
 同名の Print labels ファイルが既に存在します。前回の実行が途中で失敗した場合、空・不完全なファイルが残っている可能性があります。CountIT の Print labels 画面でファイルを手動削除してから再実行してください。
 
-または `--append-to-label-print` で既存ファイルに追記することもできます。
+または `add` 形式（`"<Stock Count名>" add "<既存Print Label名>"`）で既存ファイルに追記することもできます。
 
 ### `Stock count not found`
 
@@ -175,7 +205,7 @@ append モードで、既存行の商品コードが信頼できる形式で読�
 ## 開発者向けメモ
 
 - ソース: `pos-label-print/src/`
-- テスト: `pos-label-print/test/logic.test.js`
+- テスト: `pos-label-print/test/args.test.js`（引数解析）、`pos-label-print/test/logic.test.js`（ロジック・ページ処理）
 - コード変更後の確認:
   ```bash
   node --check pos-label-print/src/*.js
