@@ -11,17 +11,21 @@
 
 ## 実行コマンド
 
+正式な実行方法は、**countit-automation 直下**（リポジトリルート）から実行する以下の形式です。
+
 ```bash
 npm run stock:dry-run
 npm run stock:semi-auto
 npm run stock:full-auto
 ```
 
-任意の入力ファイルを指定する場合:
+任意の入力ファイルを指定する場合（`--input` は `pos-stock-automation/` からの相対パスで指定します）:
 
 ```bash
-node src/main.js --mode dry-run --input input/stock_input.tsv
+npm run stock:dry-run -- --input input/stock_input.tsv
 ```
+
+依存関係のインストール（`npm install`）は、現段階では `pos-stock-automation/` ディレクトリ内で行います。
 
 ## 実行モード
 
@@ -116,13 +120,14 @@ DEBUG時は、CountIT画面上の会社名や候補テキストがログに出�
 
 ## ローカル確認
 
-以下はCountITにアクセスしません。`pos-stock-automation/` ディレクトリ内から実行するか、リポジトリルートからサブシェル形式で実行してください。
+以下はCountITにアクセスしません。
 
 ```bash
-# pos-stock-automation/ 内から実行
+# countit-automation 直下から実行する場合（正式な方法）
+node --check pos-stock-automation/src/*.js
+npm run test:stock
+
+# pos-stock-automation/ ディレクトリ内から直接実行する場合
 node --check src/*.js
 npm test
-
-# リポジトリルートから実行する場合
-( cd pos-stock-automation && npm test )
 ```

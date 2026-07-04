@@ -54,13 +54,14 @@ Windowsで使う場合は、特に以下に注意してください。
 1. GitHubから `Automation` リポジトリを取得します。
 2. ルートの `.env.example` を参考に、`Automation/.env` をローカルで作成します。
 3. `.env` に CountIT のログイン情報と会社名を設定します。
-4. `pos-discount-automation` で `npm install` を実行します。
-5. `pos-stock-automation` で `npm install` を実行します。
-6. 必要に応じて Playwright browser をインストールします。
-7. discount と stock は標準の `examples/*.tsv` を参考に、各プロジェクトのローカル入力ファイルを作成します。どちらも必要に応じて `.csv` も読み込めます。
-8. まず `npm test` を実行します。
-9. CountIT操作は必ず `dry-run` から確認します。
-10. `dry-run` 確認後、必要に応じて `semi-auto`、十分に検証した後で `full-auto` を使います。
+4. リポジトリルートで `npm install` を実行します。
+5. `pos-discount-automation` で `npm install` を実行します。
+6. `pos-stock-automation` で `npm install` を実行します。
+7. 必要に応じて Playwright browser をインストールします。
+8. discount と stock は標準の `examples/*.tsv` を参考に、各プロジェクトのローカル入力ファイルを作成します。どちらも必要に応じて `.csv` も読み込めます。
+9. リポジトリルート（countit-automation直下）に戻り、`npm test` を実行します。
+10. CountIT操作は必ず `dry-run` から確認します。
+11. `dry-run` 確認後、必要に応じて `semi-auto`、十分に検証した後で `full-auto` を使います。
 
 ## 利用範囲
 

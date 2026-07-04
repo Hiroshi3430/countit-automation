@@ -19,12 +19,15 @@ CountIT の Stock Count を読み取り、**Current stock が 0 以下の商品*
 
 ---
 
-## コマンド（リポジトリルートから実行）
+## コマンド（countit-automation 直下から実行）
+
+正式な実行方法は `npm run label-print:<mode> -- --stock-count "<Stock Count名>"` に統一します。
+既存の `npm run label-print -- --stock-count "<Stock Count名>" --dry-run` 形式（フラグを自分で指定する方式）も後方互換として引き続き使用できます。
 
 ### 内容確認のみ（Print labels を作成・保存しない）
 
 ```bash
-npm run label-print -- --stock-count "<Stock Count名>" --dry-run
+npm run label-print:dry-run -- --stock-count "<Stock Count名>"
 ```
 
 - Stock Count を開き、Current stock ≤ 0 の商品一覧をログに出力します
@@ -35,7 +38,7 @@ npm run label-print -- --stock-count "<Stock Count名>" --dry-run
 ### 少数件数でのテスト（推奨：初回は必ずこちら）
 
 ```bash
-npm run label-print -- --stock-count "<Stock Count名>" --semi-auto --limit 3
+npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --limit 3
 ```
 
 - 全件を検出しますが、Print labels への追加は最初の 3 件のみ
@@ -44,13 +47,13 @@ npm run label-print -- --stock-count "<Stock Count名>" --semi-auto --limit 3
 ### 全件 semi-auto
 
 ```bash
-npm run label-print -- --stock-count "<Stock Count名>" --semi-auto
+npm run label-print:semi-auto -- --stock-count "<Stock Count名>"
 ```
 
 ### 全件 通常モード（自動 Save）
 
 ```bash
-npm run label-print -- --stock-count "<Stock Count名>"
+npm run label-print:full-auto -- --stock-count "<Stock Count名>"
 ```
 
 `dry-run` と `semi-auto` で十分確認した後のみ使用してください。
@@ -75,10 +78,9 @@ npm run label-print -- --stock-count "<Stock Count名>"
 別の Stock Count の商品を既存の Print labels ファイルに追記します。
 
 ```bash
-npm run label-print -- \
+npm run label-print:semi-auto -- \
   --append-to-label-print "<Stock Count名>" \
-  --stock-count "<別のStock Count名>" \
-  --semi-auto
+  --stock-count "<別のStock Count名>"
 ```
 
 append モードでの動作:
@@ -95,7 +97,7 @@ append モードでの動作:
 Print labels ファイル名を Stock Count 名と別に指定できます:
 
 ```bash
-npm run label-print -- --stock-count "<Stock Count名>" --label-print-name "新入荷ラベル"
+npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --label-print-name "新入荷ラベル"
 ```
 
 ---

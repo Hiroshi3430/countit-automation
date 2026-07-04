@@ -16,8 +16,11 @@
 ## 現行運用方式
 
 - 現在の運用は Node script 型です
-- `pos-discount-automation` と `pos-stock-automation` は各プロジェクトフォルダで `npm run ...` を実行します
-- `pos-label-print` は **リポジトリルート** で `npm run label-print -- ...` を実行します
+- 運用コマンド・テストコマンドは、`pos-discount-automation` / `pos-stock-automation` / `pos-label-print` のいずれも **リポジトリルート（countit-automation直下）** から実行します
+  - `npm run discounts:<mode>`
+  - `npm run stock:<mode>`
+  - `npm run label-print:<mode> -- --stock-count "<Stock Count名>"`
+- 依存関係のインストール（`npm install`）は、現段階では discount / stock は各子ディレクトリで、label-print はリポジトリルートで行います
 - `npx playwright test` は使いません
 
 ## 必要環境
@@ -113,10 +116,13 @@ node --check pos-label-print/src/*.js
 node --check pos-discount-automation/src/*.js
 node --check pos-stock-automation/src/*.js
 
-# サブシェルで実行することでカレントディレクトリが変わりません
+# ロジックテスト（ルートコマンドにまとめて集約済み）
 npm run test:label-print
-( cd pos-discount-automation && npm test )
-( cd pos-stock-automation && npm test )
+npm run test:discounts
+npm run test:stock
+
+# まとめて実行する場合
+npm test
 ```
 
 ### 6. CountIT 操作は必ず `dry-run` から開始
@@ -135,7 +141,7 @@ countit-automation/
   README.md
   CLAUDE.md               ← Claude Code向け作業指示
   AGENTS.md               ← 全AIエージェント共通セキュリティ規則
-  package.json            ← pos-label-print 用ルートスクリプト
+  package.json            ← 全posツールのルート実行用スクリプト
   package-lock.json
   pos-common/             ← ログイン・会社切替 共通処理
   pos-discount-automation/ ← 割引自動化
@@ -192,30 +198,33 @@ Stock Count の Current stock が 0 以下の商品を検出し、CountIT の Pr
 - Stock Count の在庫データは「読み取り後に Save して離脱」します
 - Print labels も「Save のみ」で、**+Process（在庫処理）は絶対に実行しません**
 
-### 基本コマンド（リポジトリルートから実行）
+### 基本コマンド（countit-automation 直下から実行）
+
+正式な実行方法は `npm run label-print:<mode> -- --stock-count "<Stock Count名>"` に統一します。
 
 ```bash
 # 内容確認のみ（Print labels を作成・保存しない。Stock Count の Save のみ実行）
-npm run label-print -- --stock-count "<Stock Count名>" --dry-run
+npm run label-print:dry-run -- --stock-count "<Stock Count名>"
 
 # 3件のみ追加して動作確認（semi-auto推奨）
-npm run label-print -- --stock-count "<Stock Count名>" --semi-auto --limit 3
+npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --limit 3
 
 # 全件追加（semi-auto）
-npm run label-print -- --stock-count "<Stock Count名>" --semi-auto
+npm run label-print:semi-auto -- --stock-count "<Stock Count名>"
 
 # 全件追加（通常モード・自動Save）
-npm run label-print -- --stock-count "<Stock Count名>"
+npm run label-print:full-auto -- --stock-count "<Stock Count名>"
 ```
+
+既存の `npm run label-print -- --stock-count "<Stock Count名>" --dry-run` 形式（フラグを自分で指定する方式）も後方互換として引き続き使用できます。
 
 ### 既存 Print labels への追記（appendモード）
 
 ```bash
 # 既存の Print labels ファイルに新しい Stock Count の商品を追記
-npm run label-print -- \
+npm run label-print:semi-auto -- \
   --append-to-label-print "<Stock Count名>" \
-  --stock-count "<別のStock Count名>" \
-  --semi-auto
+  --stock-count "<別のStock Count名>"
 ```
 
 append モードでは:
@@ -227,14 +236,14 @@ append モードでは:
 
 ```bash
 # Print labels ファイル名を Stock Count 名と別に指定
-npm run label-print -- --stock-count "<Stock Count名>" --label-print-name "新入荷ラベル"
+npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --label-print-name "新入荷ラベル"
 ```
 
 ### --limit オプション
 
 ```bash
 # 最初のN件だけ追加（大量商品の段階テストに便利）
-npm run label-print -- --stock-count "<Stock Count名>" --semi-auto --limit 3
+npm run label-print:semi-auto -- --stock-count "<Stock Count名>" --limit 3
 ```
 
 全件の検出は行いますが、Print labels への追加は最初の N 件のみに絞ります。
@@ -256,33 +265,51 @@ npm run label-print -- --stock-count "<Stock Count名>" --semi-auto --limit 3
 
 ## pos-discount-automation の使い方
 
+countit-automation 直下から実行します（`cd` 不要）。
+
 ```bash
-cd pos-discount-automation
 npm run discounts:dry-run
 npm run discounts:semi-auto
 npm run discounts:full-auto
 ```
 
+追加引数（`--input` など）を渡す場合:
+
+```bash
+# --input は pos-discount-automation/ からの相対パスで指定します（内部で cwd がそこに切り替わるため）
+npm run discounts:dry-run -- --input input/discount_input.tsv
+```
+
 入力ファイル: `pos-discount-automation/input/discount_input.tsv`
+依存関係のインストールは、現段階では `pos-discount-automation/` ディレクトリ内で行います（セットアップ手順を参照）。
 
 ---
 
 ## pos-stock-automation の使い方
 
+countit-automation 直下から実行します（`cd` 不要）。
+
 ```bash
-cd pos-stock-automation
 npm run stock:dry-run
 npm run stock:semi-auto
 npm run stock:full-auto
 ```
 
+追加引数（`--input` など）を渡す場合:
+
+```bash
+# --input は pos-stock-automation/ からの相対パスで指定します（内部で cwd がそこに切り替わるため）
+npm run stock:dry-run -- --input input/stock_input.tsv
+```
+
 入力ファイル: `pos-stock-automation/input/stock_input.tsv`
+依存関係のインストールは、現段階では `pos-stock-automation/` ディレクトリ内で行います（セットアップ手順を参照）。
 
 ---
 
 ## ローカル確認コマンド（CountIT にアクセスしない）
 
-すべてのコマンドは **リポジトリルート** で実行してください。
+すべてのコマンドは **リポジトリルート（countit-automation直下）** で実行してください。
 
 ```bash
 # 構文チェック
@@ -291,10 +318,13 @@ node --check pos-label-print/src/*.js
 node --check pos-discount-automation/src/*.js
 node --check pos-stock-automation/src/*.js
 
-# ロジックテスト（サブシェルで実行することでカレントディレクトリが変わりません）
+# ロジックテスト
 npm run test:label-print
-( cd pos-discount-automation && npm test )
-( cd pos-stock-automation && npm test )
+npm run test:discounts
+npm run test:stock
+
+# まとめて実行する場合
+npm test
 ```
 
 ---
@@ -325,7 +355,7 @@ npm run test:label-print
 会社名取得や会社切替で問題が起きたときのみ使います。
 
 ```bash
-DEBUG_COUNTIT_COMPANY=1 npm run label-print -- --stock-count "..." --dry-run
+DEBUG_COUNTIT_COMPANY=1 npm run label-print:dry-run -- --stock-count "..."
 DEBUG_COUNTIT_COMPANY=1 npm run discounts:dry-run
 DEBUG_COUNTIT_COMPANY=1 npm run stock:dry-run
 ```
