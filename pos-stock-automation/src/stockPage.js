@@ -32,6 +32,29 @@ async function waitForNonEmptyText(locator, { timeout = 15000, message }) {
   throw new Error(message);
 }
 
+async function waitForProductName(locator, expectedProductName, { timeout = 15000 } = {}) {
+  const normalizedExpectedProductName = normalizeStockProductName(expectedProductName);
+  const deadline = Date.now() + timeout;
+  let actualProductName = '';
+
+  while (Date.now() < deadline) {
+    try {
+      actualProductName = await locator.innerText({
+        timeout: Math.min(1000, Math.max(1, deadline - Date.now()))
+      });
+      if (normalizeStockProductName(actualProductName) === normalizedExpectedProductName) {
+        return actualProductName;
+      }
+    } catch (error) {
+      // Keep polling while CountIT replaces the previous product description.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  return actualProductName;
+}
+
 async function openInventoryCountForm(page) {
   await page.goto(selectors.stock.overviewUrl);
 
@@ -67,19 +90,34 @@ async function fillInventoryCount(page, { inventoryDescription, records }) {
       message: `Stock amount input not found: row=${rowNumber}, product_code=${item.product_code}`
     });
 
+    const normalizedExpectedProductName = normalizeStockProductName(item.product_name);
     await productInput.fill(item.product_code);
     await productInput.press('Tab');
 
-    const actualProductName = await waitForNonEmptyText(descriptionCell, {
-      message: `Stock product description did not load: row=${rowNumber}, product_code=${item.product_code}`
-    });
+    let actualProductName = '';
+    try {
+      actualProductName = await waitForNonEmptyText(descriptionCell, {
+        message: `Stock product description did not load: row=${rowNumber}, product_code=${item.product_code}`
+      });
+    } catch (error) {
+      // Retry by product name below when the product code produces no result.
+    }
+
+    if (normalizeStockProductName(actualProductName) !== normalizedExpectedProductName) {
+      console.log(
+        `stock: code lookup did not match; retrying by product name (row=${rowNumber}, code=${item.product_code})`
+      );
+      await productInput.fill('');
+      await productInput.fill(item.product_name);
+      await productInput.press('Tab');
+      actualProductName = await waitForProductName(descriptionCell, item.product_name);
+    }
 
     const normalizedActualProductName = normalizeStockProductName(actualProductName);
-    const normalizedExpectedProductName = normalizeStockProductName(item.product_name);
 
     if (normalizedActualProductName !== normalizedExpectedProductName) {
       throw new Error(
-        `商品名不一致: code=${item.product_code}, input_raw="${item.product_name}", input_normalized="${normalizedExpectedProductName}", CountIT_raw="${actualProductName}", CountIT_normalized="${normalizedActualProductName}"`
+        `商品名不一致（商品番号・商品名で検索済み）: code=${item.product_code}, input_raw="${item.product_name}", input_normalized="${normalizedExpectedProductName}", CountIT_raw="${actualProductName}", CountIT_normalized="${normalizedActualProductName}"`
       );
     }
 
