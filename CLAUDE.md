@@ -40,8 +40,9 @@ git status --short  # コミット前に必ず確認
 
 ### CountIT 本番操作
 
-- [ ] `npm run label-print` は人間の明示的許可後のみ実行
+- [ ] `npm run label-print` / `npm run label-print:*` は人間の明示的許可後のみ実行
 - [ ] `npm run stock:*` / `npm run discounts:*` も同様
+- [ ] `label-print:dry-run` も CountIT へのログインと Stock Count の Save を伴うため許可対象から除外しない
 - [ ] 初回は必ず `--dry-run` で実行
 - [ ] `--semi-auto` で最終確認後に `full-auto` 実行
 - [ ] inventory processing（+Process ボタン等）は**絶対実行禁止**
@@ -73,7 +74,7 @@ git status --short  # コミット前に必ず確認
 
 - [ ] 構文チェック：`node --check pos-*/src/*.js`
 - [ ] `rg "旧識別子"` で残存確認（0 matches 期待）
-- [ ] テスト実行：`cd pos-discount-automation && npm test` 等
+- [ ] テスト実行：`npm run test:discounts` 等（countit-automation 直下から実行）
 - [ ] `git diff` で差分確認
 
 **詳細は AGENTS.md の「リファクタリング安全ルール」を参照。**
@@ -162,9 +163,9 @@ node --check pos-stock-automation/src/*.js
 node --check pos-label-print/src/*.js
 
 # テスト実行
-( cd pos-discount-automation && npm test )
-( cd pos-stock-automation && npm test )
 npm run test:label-print
+npm run test:discounts
+npm run test:stock
 
 # コミット前確認
 git status --short

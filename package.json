@@ -5,7 +5,19 @@
   "type": "commonjs",
   "scripts": {
     "label-print": "node pos-label-print/src/main.js",
-    "test:label-print": "node pos-label-print/test/logic.test.js"
+    "label-print:dry-run": "node pos-label-print/src/main.js --mode dry-run",
+    "label-print:semi-auto": "node pos-label-print/src/main.js --mode semi-auto",
+    "label-print:full-auto": "node pos-label-print/src/main.js --mode full-auto",
+    "discounts:dry-run": "npm --prefix pos-discount-automation run discounts:dry-run --",
+    "discounts:semi-auto": "npm --prefix pos-discount-automation run discounts:semi-auto --",
+    "discounts:full-auto": "npm --prefix pos-discount-automation run discounts:full-auto --",
+    "stock:dry-run": "npm --prefix pos-stock-automation run stock:dry-run --",
+    "stock:semi-auto": "npm --prefix pos-stock-automation run stock:semi-auto --",
+    "stock:full-auto": "npm --prefix pos-stock-automation run stock:full-auto --",
+    "test:label-print": "node pos-label-print/test/args.test.js && node pos-label-print/test/logic.test.js",
+    "test:discounts": "npm --prefix pos-discount-automation test",
+    "test:stock": "npm --prefix pos-stock-automation test",
+    "test": "npm run test:label-print && npm run test:discounts && npm run test:stock"
   },
   "dependencies": {
     "dotenv": "^17.4.2"

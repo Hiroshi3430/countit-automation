@@ -57,7 +57,8 @@
 
 ### 実ブラウザ操作の禁止
 
-- CountIT にログインしてブラウザ操作を行うコマンド（`npm run label-print`・`npm run stock:*`・`npm run discounts:*` 等）は、**人間が明示的に許可した場合のみ** 実行してください
+- CountIT にログインしてブラウザ操作を行うコマンド（`npm run label-print`・`npm run label-print:*`・`npm run stock:*`・`npm run discounts:*` 等）は、**人間が明示的に許可した場合のみ** 実行してください
+- `label-print:dry-run` も CountIT へのログインと Stock Count の Save を伴うため、許可対象から除外しないでください
 - AIエージェントが自発的にブラウザ操作コマンドを実行してはいけません
 - コードレビュー・ドキュメント更新・静的チェック・ローカルテストは実行して構いません
 
@@ -89,10 +90,12 @@ node --check pos-discount-automation/src/*.js
 node --check pos-stock-automation/src/*.js
 node --check pos-label-print/src/*.js
 
-# ロジックテスト（サブシェルで実行することでカレントディレクトリが変わりません）
-( cd pos-discount-automation && npm test )
-( cd pos-stock-automation && npm test )
+# ロジックテスト（countit-automation 直下から実行）
 npm run test:label-print
+npm run test:discounts
+npm run test:stock
+# まとめて実行する場合
+npm test
 
 # コミット前確認
 git status --short
@@ -190,9 +193,9 @@ node --check pos-discount-automation/src/*.js
 node --check pos-stock-automation/src/*.js
 node --check pos-label-print/src/*.js
 
-( cd pos-discount-automation && npm test )
-( cd pos-stock-automation && npm test )
 npm run test:label-print
+npm run test:discounts
+npm run test:stock
 ```
 
 コミットはレビュー完了後のみ実行してください。

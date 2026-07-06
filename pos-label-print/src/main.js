@@ -47,9 +47,9 @@ async function main() {
     labelPrintName: args.appendToLabelPrintName || args.labelPrintName || args.stockCountDescription,
     appendToLabelPrintName: args.appendToLabelPrintName || '',
     timestamp: new Date().toISOString(),
-    mode: args.dryRun ? 'dry-run' : args.semiAuto ? 'semi-auto' : 'full-auto',
-    dryRun: args.dryRun,
-    semiAuto: args.semiAuto,
+    mode: args.mode,
+    dryRun: args.mode === 'dry-run',
+    semiAuto: args.mode === 'semi-auto',
     status: 'STARTED',
     totalDetectedItems: 0,
     itemsUsedForLabelPrint: 0,
@@ -95,7 +95,7 @@ async function main() {
       console.log(`- ${item.productCode}\t${item.description}\tcurrent=${item.currentStock}\tdiff=${item.difference}\tnew=${item.newStock}`);
     }
 
-    if (args.dryRun) {
+    if (args.mode === 'dry-run') {
       result.status = 'DRY_RUN';
       console.log('Dry run: not creating Print labels file.');
       return;
@@ -129,7 +129,7 @@ async function main() {
     result.addedItems = addResult.added;
     result.failedItems = addResult.failed;
 
-    if (args.semiAuto) {
+    if (args.mode === 'semi-auto') {
       result.status = 'SEMI_AUTO_READY';
       console.log('Semi-auto mode: products have been added. Review the browser. Press Enter to Save, or Ctrl+C to cancel.');
       await waitForEnter();
