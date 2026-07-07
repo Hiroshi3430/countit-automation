@@ -285,16 +285,36 @@ async function saveDebugScreenshot(page, rowNumber, productCode) {
   return screenshotPath;
 }
 
-async function saveLabelPrint(page) {
+async function saveLabelPrint(page, options = {}) {
   const saveButton = page.getByRole('button', { name: selectors.labelPrint.saveButtonName });
   await saveButton.waitFor({ state: 'visible', timeout: 10000 });
   await saveButton.click();
 
   try {
-    await page.getByRole('link', { name: selectors.labelPrint.addLinkName }).waitFor({ state: 'visible', timeout: 15000 });
+    if (options.expectDetailPage) {
+      await waitForLabelPrintDetailReady(page);
+    } else {
+      await page.getByRole('link', { name: selectors.labelPrint.addLinkName }).waitFor({ state: 'visible', timeout: 15000 });
+    }
   } catch (error) {
-    throw new Error(`Save failed or did not return to Print labels list: ${error.message}`);
+    const expectedPage = options.expectDetailPage ? 'label print detail page' : 'Print labels list';
+    throw new Error(`Save failed or did not return to ${expectedPage}: ${error.message}`);
   }
+}
+
+async function waitForLabelPrintDetailReady(page) {
+  const editLink = page.getByRole('link', { name: selectors.labelPrint.editLinkName });
+  const deadline = Date.now() + 15000;
+
+  while (Date.now() < deadline) {
+    const editVisible = await editLink.first().isVisible().catch(() => false);
+    const url = page.url();
+    if (editVisible && url.includes('/products/labelprint-view/')) return;
+    await page.waitForTimeout(250);
+  }
+
+  const editVisible = await editLink.first().isVisible().catch(() => false);
+  throw new Error(`label print detail page did not become ready: edit=${editVisible} url=${page.url()}`);
 }
 
 async function findLabelPrintSearchInput(page) {

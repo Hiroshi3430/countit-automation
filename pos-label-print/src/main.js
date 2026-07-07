@@ -135,7 +135,7 @@ async function main() {
       await waitForEnter();
     }
 
-    await saveLabelPrint(page);
+    await saveLabelPrint(page, { expectDetailPage: Boolean(args.appendToLabelPrintName) });
     result.status = 'SUCCESS';
   } catch (error) {
     if (error instanceof LabelPrintAlreadyExistsError) result.status = 'DUPLICATE_LABEL_PRINT';
