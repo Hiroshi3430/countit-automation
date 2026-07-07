@@ -7,7 +7,7 @@ const {
   shouldPrintLabel
 } = require('../src/logic');
 const { parseArgs } = require('../src/args');
-const { filterDuplicateLabelPrintItems } = require('../src/labelPrintPage');
+const { filterDuplicateLabelPrintItems, _test: labelPrintPageTest } = require('../src/labelPrintPage');
 const { _test: stockCountPageTest } = require('../src/stockCountPage');
 
 assert.strictEqual(parseCountItNumber('0'), 0);
@@ -112,6 +112,47 @@ function makeMockRow(cellValues) {
     difference: '',
     newStock: ''
   });
+
+  const labelLookupState = {
+    entered: '94000',
+    description: '',
+    fills: [],
+    pressed: []
+  };
+  const expectedLabelDescription = "Shinshi Yukata 2-Ten Set (Men's Casual Summer Kimono 2-Piece Set)";
+  const labelProductInput = {
+    fill: async (value) => {
+      labelLookupState.entered = value;
+      labelLookupState.fills.push(value);
+    },
+    press: async (key) => {
+      labelLookupState.pressed.push(key);
+      if (key !== 'Enter' && key !== 'Tab') return;
+      labelLookupState.description = labelLookupState.entered === '94000'
+        ? 'Flying Fish Hamachi (Hamachi Yellowtail)'
+        : labelLookupState.entered;
+    }
+  };
+  const labelPage = {
+    waitForTimeout: async () => {},
+    locator: (selector) => {
+      assert.strictEqual(selector, '#scan_line_tr_1 td.td_description');
+      return {
+        innerText: async () => labelLookupState.description
+      };
+    }
+  };
+
+  await labelPrintPageTest.selectProductForLabelPrintRow(
+    labelPage,
+    labelProductInput,
+    { productCode: '94000', description: expectedLabelDescription },
+    1,
+    { timeout: 1 }
+  );
+  assert.deepStrictEqual(labelLookupState.fills, ['', expectedLabelDescription]);
+  assert.strictEqual(labelLookupState.description, expectedLabelDescription);
+  assert.deepStrictEqual(labelLookupState.pressed, ['ArrowDown', 'Enter', 'Tab', 'ArrowDown', 'Enter']);
 
   await assert.rejects(
     () => stockCountPageTest.readStockCountRow(

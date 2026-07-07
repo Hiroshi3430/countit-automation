@@ -50,7 +50,7 @@ async function processRow({ page, row, mode, logger, screenshotDir }) {
   let priceInfo = null;
 
   try {
-    const product = await searchProduct(page, row['Product Code']);
+    const product = await searchProduct(page, row['Product Code'], row['Expected Product Name']);
     actualProductName = product.actualProductName;
 
     const existingDiscounts = await readExistingDiscounts(page);

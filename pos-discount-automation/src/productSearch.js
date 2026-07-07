@@ -89,11 +89,11 @@ async function searchProductCode(page, searchInput, searchValue) {
   console.log('searchBox:filled');
 }
 
-async function findProductRowByArticleNumber(page, searchValue) {
+async function findProductRowByArticleNumber(page, searchValue, timeout = 8000) {
   const rows = page.locator(selectors.products.resultRows);
   await rows.first().waitFor({ state: 'visible', timeout: 5000 });
 
-  const deadline = Date.now() + 8000;
+  const deadline = Date.now() + timeout;
   while (Date.now() < deadline) {
     const match = await findExactArticleNumberMatch(rows, searchValue);
     if (match) {
@@ -107,6 +107,26 @@ async function findProductRowByArticleNumber(page, searchValue) {
 
   await logProductRowCandidates(rows);
   throw new Error(`Product not found by Article number: ${searchValue}`);
+}
+
+async function findProductRowByExpectedName(page, expectedProductName, expectedArticleNumber, timeout = 8000) {
+  const rows = page.locator(selectors.products.resultRows);
+  await rows.first().waitFor({ state: 'visible', timeout: 5000 });
+
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const match = await findExpectedNameMatch(rows, expectedProductName, expectedArticleNumber);
+    if (match) {
+      console.log(`productRows:count=${match.count}`);
+      console.log(`productRowCandidate:index=${match.index} artNumber="${match.articleNumber}" name="${match.name}"`);
+      console.log('productRow:foundByExpectedName');
+      return match.row;
+    }
+    await page.waitForTimeout(250);
+  }
+
+  await logProductRowCandidates(rows);
+  throw new Error(`Product not found by Article number or Expected Product Name: code=${expectedArticleNumber}, name="${expectedProductName}"`);
 }
 
 async function findExactArticleNumberMatch(rows, searchValue) {
@@ -138,6 +158,50 @@ async function findExactArticleNumberMatch(rows, searchValue) {
   return matches[0] || null;
 }
 
+async function findExpectedNameMatch(rows, expectedProductName, expectedArticleNumber) {
+  const count = await rows.count();
+  const matches = [];
+
+  for (let i = 0; i < count; i += 1) {
+    const row = rows.nth(i);
+    const name = await tryExtractFirstNonEmptyText(
+      row,
+      selectors.products.nameCellCandidates,
+      `index=${i} field=name`
+    );
+    if (name === null) continue;
+    if (!productNamesMatch(name, expectedProductName)) continue;
+
+    const articleNumber = await tryExtractFirstNonEmptyText(
+      row,
+      selectors.products.codeCellCandidates,
+      `index=${i} field=artNumber`
+    );
+    if (articleNumber === null) continue;
+    matches.push({ row, index: i, count, articleNumber, name });
+  }
+
+  const articleMatches = matches.filter((match) => match.articleNumber === expectedArticleNumber);
+  if (articleMatches.length > 1) {
+    throw new Error(`Multiple products found by Expected Product Name and Article number: code=${expectedArticleNumber}, name="${expectedProductName}"`);
+  }
+  if (articleMatches.length === 1) return articleMatches[0];
+
+  if (matches.length === 1) {
+    throw new Error(
+      `Product name matched but Article number mismatched: expectedCode=${expectedArticleNumber}, foundCode=${matches[0].articleNumber}, name="${matches[0].name}"`
+    );
+  }
+  if (matches.length > 1) {
+    const details = matches
+      .map((match) => `index=${match.index}, artNumber="${match.articleNumber}", name="${match.name}"`)
+      .join('; ');
+    throw new Error(`Multiple products found by Expected Product Name: code=${expectedArticleNumber}, name="${expectedProductName}", matches=${details}`);
+  }
+
+  return null;
+}
+
 async function logProductRowCandidates(rows) {
   const count = await rows.count();
   console.log(`productRows:count=${count}`);
@@ -157,16 +221,29 @@ async function logProductRowCandidates(rows) {
   }
 }
 
-async function searchProduct(page, productCode) {
+async function searchProduct(page, productCode, expectedProductName = '', options = {}) {
   const searchValue = String(productCode || '').trim();
   if (!searchValue) {
     throw new Error('Product Code is empty');
   }
+  const expectedName = String(expectedProductName || '').trim();
+  const lookupTimeout = options.lookupTimeout || 8000;
 
   const searchInput = await openProducts(page);
   await searchProductCode(page, searchInput, searchValue);
 
-  const row = await findProductRowByArticleNumber(page, searchValue);
+  let row;
+  try {
+    row = await findProductRowByArticleNumber(page, searchValue, lookupTimeout);
+  } catch (error) {
+    if (!expectedName) throw error;
+    console.log(
+      `productSearch: code lookup did not find an exact Article number match; retrying by product name code=${searchValue} name="${expectedName}" reason="${error.message}"`
+    );
+    await searchProductCode(page, searchInput, expectedName);
+    row = await findProductRowByExpectedName(page, expectedName, searchValue, lookupTimeout);
+  }
+
   console.log('productRow:found');
   const actualProductName = await extractFirstNonEmptyText(row, selectors.products.nameCellCandidates);
   const clickCell = await firstExistingCell(row, selectors.products.rowClickCellCandidates);
@@ -182,6 +259,21 @@ async function searchProduct(page, productCode) {
   return { actualProductName, regularPrice };
 }
 
+function normalizeProductName(value) {
+  return String(value ?? '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function productNamesMatch(actualName, expectedName) {
+  const actual = normalizeProductName(actualName);
+  const expected = normalizeProductName(expectedName);
+  if (!actual || !expected) return false;
+  return actual === expected;
+}
+
 async function firstExistingCell(row, selectorCandidates) {
   for (const selector of selectorCandidates) {
     const locator = row.locator(selector);
@@ -190,4 +282,9 @@ async function firstExistingCell(row, selectorCandidates) {
   return row;
 }
 
-module.exports = { searchProduct };
+module.exports = {
+  searchProduct,
+  _test: {
+    productNamesMatch
+  }
+};
