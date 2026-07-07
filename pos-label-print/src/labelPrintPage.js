@@ -191,30 +191,53 @@ async function addProductToLabelPrintRow(page, item, rowNumber) {
   await amountInput.press('Tab');
 }
 
-async function selectProductForLabelPrintRow(page, productInput, item, rowNumber) {
+async function selectProductForLabelPrintRow(page, productInput, item, rowNumber, options = {}) {
+  const timeout = options.timeout || 5000;
+  let result = await attemptProductSelection(page, productInput, item, rowNumber, timeout);
+  if (result.matched) return;
+
+  console.log(
+    `labelPrint: code lookup did not match; retrying by product name row=${rowNumber} code=${item.productCode} expected="${item.description}" actual="${result.actualDescription}"`
+  );
+  await productInput.fill('');
+  await productInput.fill(item.description);
+
+  result = await attemptProductSelection(page, productInput, item, rowNumber, timeout);
+  if (result.matched) return;
+
+  throw new Error(
+    `Product selection not confirmed after productCode and productName lookup: row=${rowNumber}, productCode=${item.productCode}, expected="${item.description}", actual="${result.actualDescription}"`
+  );
+}
+
+async function attemptProductSelection(page, productInput, item, rowNumber, timeout) {
   await page.waitForTimeout(500);
 
   await productInput.press('ArrowDown');
   await productInput.press('Enter');
-  if (await waitForProductSelection(page, item, rowNumber, 5000)) return;
+  let result = await waitForProductSelection(page, item, rowNumber, timeout);
+  if (result.matched) return result;
 
   await productInput.press('Tab');
-  if (await waitForProductSelection(page, item, rowNumber, 5000)) return;
-
-  throw new Error(`Product selection not confirmed after ArrowDown+Enter and Tab: row=${rowNumber}, productCode=${item.productCode}, description="${item.description}"`);
+  result = await waitForProductSelection(page, item, rowNumber, timeout);
+  return result;
 }
 
 async function waitForProductSelection(page, item, rowNumber, timeout) {
   const deadline = Date.now() + timeout;
   const descriptionCell = page.locator(selectors.labelPrint.lineDescriptionCellFor(rowNumber));
+  let actualDescription = '';
 
   while (Date.now() < deadline) {
-    const text = normalizeText(await descriptionCell.innerText().catch(() => ''));
-    if (text && approximatelyMatchesDescription(text, item.description)) return true;
+    actualDescription = normalizeText(await descriptionCell.innerText().catch(() => ''));
+    if (actualDescription && approximatelyMatchesDescription(actualDescription, item.description)) {
+      return { matched: true, actualDescription };
+    }
     await page.waitForTimeout(250);
   }
 
-  return false;
+  actualDescription = normalizeText(await descriptionCell.innerText().catch(() => actualDescription));
+  return { matched: false, actualDescription };
 }
 
 function approximatelyMatchesDescription(actual, expected) {
@@ -380,5 +403,9 @@ module.exports = {
   openPrintLabels,
   openExistingLabelPrintForEdit,
   readExistingLabelPrintItems,
-  saveLabelPrint
+  saveLabelPrint,
+  _test: {
+    approximatelyMatchesDescription,
+    selectProductForLabelPrintRow
+  }
 };
