@@ -19,6 +19,14 @@ npm run stock:semi-auto
 npm run stock:full-auto
 ```
 
+`input/` 内の複数TSVを、ファイルごとに個別の Inventory Count として入力する場合:
+
+```bash
+npm run stock:batch:dry-run
+npm run stock:batch:semi-auto
+npm run stock:batch:full-auto
+```
+
 任意の入力ファイルを指定する場合（`--input` は `pos-stock-automation/` からの相対パスで指定します）:
 
 ```bash
@@ -73,6 +81,10 @@ item	10001	1	Sample Product
 
 - `input/stock_input.tsv` は実運用ローカルファイルです。
 - `input/stock_input.tsv` はGit管理しません。
+- `stock:batch:*` は `input/` 直下の `.tsv` をファイル名昇順で処理します。
+- `stock:batch:*` は `input/stock_input.tsv` を除外します。
+- `stock:batch:*` は `.csv`、`.DS_Store`、サブディレクトリ内のファイルを処理しません。
+- `stock:batch:*` は対象TSVが0件の場合、CountIT操作前に停止します。
 - `examples/stock_input.example.tsv` はサンプルとしてGit管理します。
 
 初回はサンプルをコピーして使います。
@@ -80,6 +92,9 @@ item	10001	1	Sample Product
 ```bash
 cp examples/stock_input.example.tsv input/stock_input.tsv
 ```
+
+一括入力用TSVも、`stock_input.tsv` と同じ列・行形式で `input/` に配置します。
+各TSVの `setting` 行の `description` が、そのファイルで作成する Inventory Count の説明文になります。
 
 ## 実行ログ
 

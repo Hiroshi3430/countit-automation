@@ -1,7 +1,14 @@
 'use strict';
 
 const assert = require('assert');
-const { detectDelimiterFromExtension, parseStockInput } = require('../src/input');
+const fs = require('fs/promises');
+const os = require('os');
+const path = require('path');
+const {
+  collectBatchStockInputFiles,
+  detectDelimiterFromExtension,
+  parseStockInput
+} = require('../src/input');
 
 assert.strictEqual(detectDelimiterFromExtension('input/stock_input.tsv'), '\t');
 assert.strictEqual(detectDelimiterFromExtension('input/stock_input.csv'), ',');
@@ -40,4 +47,29 @@ assert.throws(() => parseStockInput([
   'item\t12345\tabc\tSample Product\t'
 ].join('\n')), /amount は整数/);
 
-console.log('stock input tests passed');
+(async () => {
+  const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'stock-input-test-'));
+  await fs.writeFile(path.join(tempDir, 'stock_input.tsv'), '', 'utf8');
+  await fs.writeFile(path.join(tempDir, 'b.tsv'), '', 'utf8');
+  await fs.writeFile(path.join(tempDir, 'a.tsv'), '', 'utf8');
+  await fs.writeFile(path.join(tempDir, 'ignored.csv'), '', 'utf8');
+  await fs.writeFile(path.join(tempDir, '.DS_Store'), '', 'utf8');
+  await fs.mkdir(path.join(tempDir, 'nested'));
+  await fs.writeFile(path.join(tempDir, 'nested', 'nested.tsv'), '', 'utf8');
+
+  const batchFiles = await collectBatchStockInputFiles(tempDir);
+  assert.deepStrictEqual(batchFiles.map((filePath) => path.basename(filePath)), ['a.tsv', 'b.tsv']);
+
+  const emptyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'stock-input-empty-test-'));
+  await fs.writeFile(path.join(emptyDir, 'stock_input.tsv'), '', 'utf8');
+  await fs.writeFile(path.join(emptyDir, 'ignored.csv'), '', 'utf8');
+  await assert.rejects(
+    () => collectBatchStockInputFiles(emptyDir),
+    /一括stock入力対象のTSVファイルがありません/
+  );
+
+  console.log('stock input tests passed');
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

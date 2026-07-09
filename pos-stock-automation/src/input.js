@@ -77,4 +77,26 @@ async function readStockInput(inputPath) {
   return parseStockInput(await fs.readFile(absolutePath, 'utf8'), delimiter);
 }
 
-module.exports = { detectDelimiterFromExtension, parseStockInput, readStockInput };
+async function collectBatchStockInputFiles(inputDir) {
+  const entries = await fs.readdir(inputDir, { withFileTypes: true });
+  const files = entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((fileName) => path.extname(fileName).toLowerCase() === '.tsv')
+    .filter((fileName) => fileName !== 'stock_input.tsv')
+    .sort((a, b) => a.localeCompare(b))
+    .map((fileName) => path.join(inputDir, fileName));
+
+  if (files.length === 0) {
+    throw new Error(`一括stock入力対象のTSVファイルがありません: ${inputDir}`);
+  }
+
+  return files;
+}
+
+module.exports = {
+  collectBatchStockInputFiles,
+  detectDelimiterFromExtension,
+  parseStockInput,
+  readStockInput
+};
