@@ -1,21 +1,8 @@
 # countit-automation - Claude Code 作業チェックリスト
 
+@AGENTS.md
+
 このファイルは Claude Code の **実行チェックリスト** です。
-ポリシー・ルール詳細・背景説明は `AGENTS.md` を参照してください。
-
-本ファイルは基本チェックだけで作業開始できるように設計されています。詳細判断は `AGENTS.md` を参照してください。
-
----
-
-## プロジェクト概要
-
-- CountIT 本番画面を直接操作する Node.js ツール
-- `pos-discount-automation/`: 割引作成・終了・置換
-- `pos-stock-automation/`: Inventory Counts 入力補助
-- `pos-label-print/`: Print labels 作成
-- `pos-common/`: 共通ログイン処理
-
-**安定性最優先。既存ロジック保護を優先。**
 
 ---
 
@@ -47,8 +34,6 @@ git status --short  # コミット前に必ず確認
 - [ ] `--semi-auto` で最終確認後に `full-auto` 実行
 - [ ] inventory processing（+Process ボタン等）は**絶対実行禁止**
 
-**詳細は AGENTS.md の「CountIT 本番操作に関する規則」を参照。**
-
 ---
 
 ## 変更前チェック
@@ -77,50 +62,6 @@ git status --short  # コミット前に必ず確認
 - [ ] テスト実行：`npm run test:discounts` 等（countit-automation 直下から実行）
 - [ ] `git diff` で差分確認
 
-**詳細は AGENTS.md の「リファクタリング安全ルール」を参照。**
-
----
-
-## Spreadsheet ↔ GAS 連携確認 - チェックリスト
-
-複数シート連携時（確認事項の要約）：
-
-- [ ] `openById()` で参照しているシート ID が正しいか
-- [ ] `IMPORTRANGE` 式の参照先が正しいか
-- [ ] 連携先シート構造に変更がないか
-
-**詳細は Atariya/AGENTS.md の「複数 Spreadsheet 連携確認」を参照。**
-
----
-
-## schema 更新確認 - チェックリスト
-
-（countit-automation は Node.js プロジェクトですが、schema ファイルがある場合）
-
-- [ ] `docs/schema.json` が存在するか
-- [ ] 入出力フォーマット構造に変更があるか
-- [ ] 更新必要/不要を報告に記載
-
-**詳細は AGENTS.md を参照。**
-
----
-
-## README 更新確認 - チェックリスト
-
-以下の変更時：
-
-- [ ] 新機能追加
-- [ ] `.env` キー追加・変更
-- [ ] 実行手順変更
-- [ ] 新コマンド追加
-
-判定：
-
-- [ ] ユーザー操作に影響あり → README 更新必要
-- [ ] 内部実装変更のみ → README 更新不要
-
-**詳細は AGENTS.md の「README 整合性ルール」を参照。**
-
 ---
 
 ## レビュー報告チェックリスト
@@ -139,18 +80,6 @@ git status --short  # コミット前に必ず確認
 
 ---
 
-## コーディング規約 - 確認項目
-
-- [ ] CommonJS（`require` / `module.exports`）を使用
-- [ ] テストは `assert` ライブラリ使用（Playwright Test ではない）
-- [ ] TSV/CSV 解析は `csv-parse/sync` 使用
-- [ ] モジュール分割：`args.js`, `logic.js`, `selectors.js`, `*Page.js` 構造維持
-- [ ] コメントは「なぜ」が非自明な場合のみ記述
-
-**詳細は AGENTS.md を参照。**
-
----
-
 ## テスト・構文確認 - チェックリスト
 
 修正後、**リポジトリルート**で実行：
@@ -166,10 +95,13 @@ node --check pos-label-print/src/*.js
 npm run test:label-print
 npm run test:discounts
 npm run test:stock
+# まとめて実行する場合
+npm test
 
 # コミット前確認
 git status --short
 git diff --stat
+git ls-files pos-label-print/
 ```
 
 - [ ] すべてのチェックが PASS
@@ -185,8 +117,6 @@ git diff --stat
 - [ ] `.gitignore` 対象ファイルをコミットしない
 - [ ] PR説明に実行テスト・確認内容を記載
 
-**詳細は AGENTS.md の「生成物・業務データのコミット禁止」と「コード変更レビュー報告フォーマット」を参照。**
-
 ---
 
 ## 実行禁止項目 - 確認
@@ -199,5 +129,3 @@ git diff --stat
 - [ ] `input/*.tsv`, `.env*`, スクリーンショット等の検査
 - [ ] 大規模リファクタリング・新依存関係・TypeScript移行を無確認実行
 - [ ] inventory processing（+Process 等）の実行
-
-**詳細は AGENTS.md を参照。**

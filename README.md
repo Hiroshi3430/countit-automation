@@ -139,8 +139,8 @@ countit-automation/
   .env.example            ← テンプレート（コミット可）
   .gitignore
   README.md
-  CLAUDE.md               ← Claude Code向け作業指示
-  AGENTS.md               ← 全AIエージェント共通セキュリティ規則
+  CLAUDE.md               ← AGENTS.mdを読み込むClaude Code向け実行チェックリスト
+  AGENTS.md               ← 全AIエージェント向けリポジトリ作業規則の正本
   package.json            ← 全posツールのルート実行用スクリプト
   package-lock.json
   pos-common/             ← ログイン・会社切替 共通処理
@@ -391,4 +391,3 @@ DEBUG_COUNTIT_COMPANY=1 npm run stock:dry-run
 - input parser の共通化
 - `DangerousAutomationError` は `pos-common/errors.js` に共通化済み。今後は必要に応じて他の安全系エラーも同じ方針で整理する
 - `waitForEnter()` の pos-common への移動（discount/stock/label-print でそれぞれ定義中）
-
