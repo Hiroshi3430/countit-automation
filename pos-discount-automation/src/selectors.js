@@ -103,13 +103,13 @@ const selectors = {
       'td:nth-child(1)',
       'td:nth-child(2)'
     ],
-    endDateInput: 'input[name="forms_form_100_EndDate_date"]',
-    endDateTimeInput: 'input[name="forms_form_100_EndDate_time"]',
+    endDateInput: 'input[name^="forms_form_"][name$="_EndDate_date"]',
+    endDateTimeInput: 'input[name^="forms_form_"][name$="_EndDate_time"]',
     endDateClockIcon: '.frminputcontainer_forms_form_100_EndDate > .hdc_icon-clock-o',
-    startDateInput: 'input[name="forms_form_100_StartDate_date"]',
-    startDateTimeInput: 'input[name="forms_form_100_StartDate_time"]',
+    startDateInput: 'input[name^="forms_form_"][name$="_StartDate_date"]',
+    startDateTimeInput: 'input[name^="forms_form_"][name$="_StartDate_time"]',
     startDateClockIcon: '.frminputcontainer_forms_form_100_StartDate > .hdc_icon-clock-o',
-    newPriceInput: 'input[name="forms_form_100_NewPrice"]',
+    newPriceInput: 'input[name^="forms_form_"][name$="_NewPrice"]',
     popupCloseCandidates: [
       '.popup-close:visible',
       '.popup-header .close:visible',

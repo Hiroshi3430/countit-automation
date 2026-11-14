@@ -158,3 +158,19 @@ npm run test:discounts
 node --check src/*.js
 npm test
 ```
+
+### 割引フォームの回帰テスト
+
+割引ポップアップ内の入力欄はフォーム番号（100 / 200など）に依存せず、
+`NewPrice`・`StartDate_date`・`EndDate_date` などの項目名で特定します。
+ローカルHTMLで追加・編集時の価格と日時入力を確認します。CountITには接続しません。
+
+```bash
+# Chromiumが未導入の場合（pos-discount-automation内で実行）
+npx playwright install chromium
+# リポジトリ直下から実行
+npm --prefix pos-discount-automation run test:browser
+```
+
+本番画面での保存成功はこのテストの対象外です。実画面の確認は既存の
+dry-run → semi-auto → full-auto の順序に従ってください。
