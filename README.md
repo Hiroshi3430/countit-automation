@@ -25,7 +25,7 @@
 
 ## 必要環境
 
-- Node.js
+- Node.js 20以上（更新時の確認環境: 24.16.0）
 - npm
 - Playwright Chromium
 - CountIT アカウント
@@ -70,6 +70,10 @@ COUNTIT_COMPANY_NAME_LABEL=
 `.env` は絶対に Git 管理しないでください。
 
 ### 3. 依存関係をインストール
+
+Playwright関連パッケージは、親・discount・stockの3か所で **1.64.0** に固定しています。再セットアップは各ディレクトリで `npm ci` を使うとロックファイルと同じ依存関係を復元できます。
+更新時は3か所を同じバージョンへ揃え、各ディレクトリで対応するChromiumをインストールしてください。プロジェクトを移動した場合も、移動先で再実行してブラウザの利用元を登録します。
+互換性確認前は `PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install chromium`（macOS/Linux）で旧ブラウザの自動削除を抑止できます。旧版の整理は全利用元の移行・検証後に行い、共有キャッシュを使う他プロジェクトやアプリのブラウザは残してください。
 
 **pos-label-print はリポジトリルートで:**
 
