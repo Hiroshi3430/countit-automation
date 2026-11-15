@@ -9,6 +9,8 @@ function parseDelimited(text, delimiter = '\t') {
     columns: true,
     skip_empty_lines: true,
     trim: true,
+    // TSV product names may contain literal quotes in otherwise unquoted fields.
+    relax_quotes: delimiter === '\t',
     delimiter
   });
 
