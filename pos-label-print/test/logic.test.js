@@ -7,7 +7,12 @@ const {
   shouldPrintLabel
 } = require('../src/logic');
 const { parseArgs } = require('../src/args');
-const { filterDuplicateLabelPrintItems, _test: labelPrintPageTest } = require('../src/labelPrintPage');
+const { selectors } = require('../src/selectors');
+const {
+  filterDuplicateLabelPrintItems,
+  readExistingLabelPrintItems,
+  _test: labelPrintPageTest
+} = require('../src/labelPrintPage');
 const { _test: stockCountPageTest } = require('../src/stockCountPage');
 
 assert.strictEqual(parseCountItNumber('0'), 0);
@@ -61,6 +66,26 @@ const duplicateResult = filterDuplicateLabelPrintItems([
 assert.deepStrictEqual(duplicateResult.uniqueItems.map((item) => item.productCode), ['10002', '10003']);
 assert.deepStrictEqual(duplicateResult.skippedDuplicates.map((item) => item.productCode), ['10001', '10002']);
 
+function makeMockLabelPrintPage(rows) {
+  return {
+    locator(selector) {
+      if (selector === selectors.labelPrint.lineProductInput) {
+        return {
+          count: async () => rows.length,
+          nth: (index) => ({
+            isVisible: async () => true,
+            getAttribute: async () => `scan_line_product_name_${index + 1}`,
+            inputValue: async () => rows[index].productInput
+          })
+        };
+      }
+      const row = rows.find((_, index) => selector === selectors.labelPrint.lineDescriptionCellFor(index + 1));
+      assert.ok(row, `Unexpected selector: ${selector}`);
+      return { innerText: async () => row.description };
+    }
+  };
+}
+
 function makeMockRow(cellValues) {
   const cells = cellValues.map((value) => {
     const cell = {
@@ -93,6 +118,33 @@ function makeMockRow(cellValues) {
 }
 
 (async () => {
+  const existingLabels = await readExistingLabelPrintItems(makeMockLabelPrintPage([
+    { productInput: '10001', description: 'Test product A' },
+    { productInput: 'Supplier\u00a0 029', description: 'Test product B' },
+    { productInput: '', description: '' }
+  ]));
+  assert.deepStrictEqual(existingLabels.map((item) => item.productCode), ['10001', 'Supplier 029']);
+
+  const appendResult = filterDuplicateLabelPrintItems([
+    { productCode: ' Supplier  029 ' },
+    { productCode: 'Supplier 29' },
+    { productCode: 'Other 029' }
+  ], existingLabels);
+  assert.deepStrictEqual(appendResult.uniqueItems.map((item) => item.productCode), ['Supplier 29', 'Other 029']);
+  assert.deepStrictEqual(appendResult.skippedDuplicates.map((item) => item.productCode), [' Supplier  029 ']);
+
+  for (const row of [
+    { productInput: '', description: 'Test product' },
+    { productInput: 'Supplier 029', description: '' },
+    { productInput: 'Sample Product', description: 'Test product' },
+    { productInput: 'Sample 029', description: 'SAMPLE 029' }
+  ]) {
+    await assert.rejects(
+      () => readExistingLabelPrintItems(makeMockLabelPrintPage([row])),
+      /Existing label print rows could not be read safely.*row=1/
+    );
+  }
+
   const item = await stockCountPageTest.readStockCountRow(
     makeMockRow([
       { text: '50038' },

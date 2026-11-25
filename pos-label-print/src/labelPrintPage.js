@@ -93,7 +93,7 @@ async function readExistingLabelPrintItems(page) {
 
   for (const row of rows) {
     if (!row.productInputValue && !row.description) continue;
-    if (isReliableProductCode(row.productInputValue)) {
+    if (isReliableProductCode(row.productInputValue, row.description)) {
       existingItems.push({
         rowNumber: row.rowNumber,
         productCode: row.productInputValue,
@@ -409,8 +409,13 @@ async function readVisibleLabelPrintRows(page) {
   return rows;
 }
 
-function isReliableProductCode(value) {
-  return /^[A-Za-z0-9_-]+$/.test(normalizeText(value));
+function isReliableProductCode(value, description) {
+  if (/^[A-Za-z0-9_-]+$/.test(value)) return true;
+
+  // A product name can also end in a number, so require a separate description for spaced codes.
+  return /^[A-Za-z][A-Za-z0-9_-]* [0-9]+$/.test(value)
+    && description !== ''
+    && value.toLowerCase() !== description.toLowerCase();
 }
 
 module.exports = {
